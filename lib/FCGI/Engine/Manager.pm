@@ -3,6 +3,8 @@ package FCGI::Engine::Manager;
 use Moose;
 use MooseX::Types::Path::Class;
 
+$|++;
+
 use FCGI::Engine::Manager::Server;
 
 use Best [
