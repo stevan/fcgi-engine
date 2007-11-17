@@ -40,7 +40,7 @@ has '_servers' => (
 
 sub run {
     my $self = shift;
-    my $cmd  = $self->extra_argv->[0] || confess "No command specified";
+    my $cmd  = ($self->extra_argv || [])->[0] || confess "No command specified";
     $self->$cmd;
 }
 

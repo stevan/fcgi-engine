@@ -58,7 +58,7 @@ has 'pid_obj' => (
 
 sub construct_command_line {
     my $self = shift;
-    return ("/usr/bin/perl",
+    return ("perl",
          ($self->has_additional_args
              ? $self->additional_args
              : ()),
