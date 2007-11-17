@@ -3,6 +3,11 @@
 use strict;
 use warnings;
 
+use FindBin;
+use File::Spec::Functions;
+
+use lib catdir($FindBin::Bin, updir, updir, 'lib');
+
 use FCGI::Engine;
 
 {

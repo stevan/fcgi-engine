@@ -6,6 +6,7 @@ use FindBin;
 use File::Spec::Functions;
 
 use Test::More no_plan => 1;
+use Test::Exception;
 use Test::Moose;
 
 BEGIN {
@@ -18,8 +19,12 @@ my $m = FCGI::Engine::Manager->new(
 isa_ok($m, 'FCGI::Engine::Manager');
 does_ok($m, 'MooseX::Getopt');
 
-$m->start;
+lives_ok {
+    $m->start;
+} '... started okay';
 
-diag join "\n" => map { chomp; s/\s+$//; $_ } `ps auxwww | grep fcgi`;
+diag $m->status;
 
-$m->stop;
+lives_ok {
+    $m->stop;
+} '... started okay';
