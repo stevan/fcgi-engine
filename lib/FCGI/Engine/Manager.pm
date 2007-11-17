@@ -34,6 +34,7 @@ has '_servers' => (
         return [ 
             map { 
                 $_->{server_class} ||= "FCGI::Engine::Manager::Server";
+                Class::MOP::load_class($_->{server_class});
                 $_->{server_class}->new(%$_);
             } @$servers 
         ];
