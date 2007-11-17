@@ -22,12 +22,12 @@ dies_ok {
     FCGI::Engine->new_with_options;
 } '... cant build class with out handler_class';
 
-dies_ok {
-    FCGI::Engine->new_with_options(
-        handler_class => 'Foo', 
-        handler_method => 'run'
-    );
-} '... cant have a handler method which is not supported by the handler class';
+# dies_ok {
+#     FCGI::Engine->new_with_options(
+#         handler_class => 'Foo', 
+#         handler_method => 'run'
+#     );
+# } '... cant have a handler method which is not supported by the handler class';
 
 {
     my $e = FCGI::Engine->new_with_options(handler_class => 'Foo');

@@ -106,13 +106,6 @@ sub BUILD {
     ($self->has_pidfile)
         || confess "You must specify a pidfile if you are listening"
             if $self->is_listening;
-
-    ($self->handler_class->can($self->handler_method))
-        || confess "The handler class ("
-                 . $self->handler_class
-                 . ") does not support the handler method ("
-                 . $self->handler_method
-                 . ")";
 }
 
 sub run {
@@ -122,6 +115,13 @@ sub run {
 
     my $handler_class = $self->handler_class;
     Class::MOP::load_class($handler_class);
+
+    ($self->handler_class->can($self->handler_method))
+        || confess "The handler class ("
+                 . $self->handler_class
+                 . ") does not support the handler method ("
+                 . $self->handler_method
+                 . ")";
 
     my $socket = 0;
 
