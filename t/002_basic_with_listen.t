@@ -13,7 +13,9 @@ BEGIN {
 
 {
     package Foo;
-    sub handler { "Foo::handler was called (but no one will ever see this)" }
+    sub handler { 
+        "Foo::handler was called (but no one will ever see this)";
+    }
 }
 
 my $SOCKET  = '/tmp/fcgi_engine_test_application.socket';
@@ -39,7 +41,7 @@ is($e->pidfile, $PIDFILE, '... we have the right pidfile');
 
 ok($e->should_detach, '... we should daemonize');
 
-is($e->manager, 'FCGI::ProcManager', '... we have the default manager (FCGI::ProcManager)');
+is($e->manager, 'FCGI::Engine::ProcManager', '... we have the default manager (FCGI::ProcManager)');
 ok(!$e->has_pre_fork_init, '... we dont have any pre-fork-init');
 
 unless ( fork ) {

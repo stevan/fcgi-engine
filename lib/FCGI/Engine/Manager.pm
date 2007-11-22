@@ -41,12 +41,6 @@ has '_servers' => (
     },
 );
 
-sub run {
-    my $self = shift;
-    my $cmd  = ($self->extra_argv || [])->[0] || confess "No command specified";
-    $self->$cmd;
-}
-
 sub log { shift; print @_, "\n" }
 
 sub start {

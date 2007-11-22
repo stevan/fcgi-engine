@@ -25,7 +25,7 @@ ok(!$e->is_listening, '... we are not listening');
 is($e->nproc, 1, '... we have the default 1 proc');
 ok(!$e->has_pidfile, '... we have no pidfile');
 ok(!$e->should_detach, '... we shouldnt daemonize');
-is($e->manager, 'FCGI::ProcManager', '... we have the default manager (FCGI::ProcManager)');
+is($e->manager, 'FCGI::Engine::ProcManager', '... we have the default manager (FCGI::ProcManager)');
 
 ok(!$e->has_pre_fork_init, '... we dont have any pre-fork-init');
 
