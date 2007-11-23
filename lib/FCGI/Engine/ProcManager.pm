@@ -1,325 +1,378 @@
 package FCGI::Engine::ProcManager;
+use Moose;
+use Moose::Util::TypeConstraints;
+use MooseX::AttributeHelpers;
+use MooseX::Types::Path::Class;
 
-use strict;
-use warnings;
+use constant DEBUG => 1;
 
 use POSIX qw(:signal_h);
 
-#our $Q;
-#our $FCGI::Engine::ProcManager::Default = 'FCGI::Engine::ProcManager';
+our $VERSION   = '0.01'; 
+our $AUTHORITY = 'cpan:STEVAN';
+
+enum 'FCGI::Engine::ProcManager::Role' => qw[manager server];
+
+has 'role' => (
+    is      => 'rw',
+    isa     => 'FCGI::Engine::ProcManager::Role',
+    default => sub { 'manager' }
+);
+  
+has 'start_delay' => (
+    is      => 'rw',
+    isa     => 'Int',
+    default => sub { 0 }    
+);
+
+has 'die_timeout' => (
+    is      => 'rw',
+    isa     => 'Int',
+    default => sub { 60 }    
+);  
+  
+has 'n_processes' => (
+    is       => 'rw',
+    isa      => 'Int',
+    required => 1,
+); 
+
+has 'pid_fname' => (
+    is       => 'rw',
+    isa      => 'Path::Class::File',
+    coerce   => 1,
+    required => 1,
+);
 
 our $SIG_CODEREF;
-our $VERSION = '0.01'; 
+        
+has 'no_signals' => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => sub { 0 }
+);
 
-sub new {
-  my ($proto,$init) = @_;
-  $init ||= {};
+has 'sigaction_no_sa_restart' => (is => 'rw', isa => 'POSIX::SigAction');
+has 'sigaction_sa_restart'    => (is => 'rw', isa => 'POSIX::SigAction');
 
-  my $this = { 
-	      role => "manager",
-	      start_delay => 0,
-	      die_timeout => 60,
-	      %$init
-	     };
-  bless $this, ref($proto)||$proto;
+has 'SIG_RECEIVED' => (
+    is      => 'rw',
+    isa     => 'HashRef',
+    default => sub { +{} }
+);
 
-  $this->{PIDS} = {};
+has 'MANAGER_PID' => (
+    is  => 'rw',
+    isa => 'Int',
+);
 
-  # initialize signal constructions.
-  unless ($this->no_signals()) {
-    $this->{sigaction_no_sa_restart} =
-	POSIX::SigAction->new('FCGI::Engine::ProcManager::sig_sub');
-    $this->{sigaction_sa_restart} =
-	POSIX::SigAction->new('FCGI::Engine::ProcManager::sig_sub',undef,POSIX::SA_RESTART);
-  }
+has 'server_pids' => (
+    metaclass => 'Collection::Hash',
+    is        => 'rw',
+    isa       => 'HashRef',
+    clearer   => 'forget_all_pids',     
+    default   => sub { +{} },  
+    provides  => {
+        'set'    => 'add_pid',
+        'keys'   => 'get_all_pids',
+        'delete' => 'remove_pid',
+        'empty'  => 'has_pids',
+        'count'  => 'pid_count',
+    }
+);
 
-  return $this;
+sub BUILD {
+    my $self = shift;
+    unless ($self->no_signals()) {
+        $self->sigaction_no_sa_restart(
+            POSIX::SigAction->new(
+                'FCGI::Engine::ProcManager::sig_sub'
+            )
+        );
+        $self->sigaction_sa_restart(
+            POSIX::SigAction->new(
+                'FCGI::Engine::ProcManager::sig_sub',
+                undef,
+                POSIX::SA_RESTART
+            )
+        );
+    }
 }
 
 
 sub pm_manage {
-  my ($this,%values) = @_;
-  map { $this->pm_parameter($_,$values{$_}) } keys %values;
-
-  # skip to handling now if we won't be managing any processes.
-  $this->n_processes() or return;
-
-  # call the (possibly overloaded) management initialization hook.
-  $this->role("manager");
-  $this->managing_init();
-  $this->pm_notify("initialized");
-
-  my $manager_pid = $$;
-
- MANAGING_LOOP: while (1) {
-
-    # if the calling process goes away, perform cleanup.
-    #getppid() == 1 and
-    #  return $this->pm_die("calling process has died");
-
-    $this->n_processes() > 0 or
-      return $this->pm_die();
-
-    # while we have fewer servers than we want.
-  PIDS: while (keys(%{$this->{PIDS}}) < $this->n_processes()) {
-
-      if (my $pid = fork()) {
-	# the manager remembers the server.
-	$this->{PIDS}->{$pid} = { pid=>$pid };
-        $this->pm_notify("server (pid $pid) started");
-
-      } elsif (! defined $pid) {
-	return $this->pm_abort("fork: $!");
-
-      } else {
-	$this->{MANAGER_PID} = $manager_pid;
-	# the server exits the managing loop.
-	last MANAGING_LOOP;
-      }
-
-      for (my $s = $this->start_delay(); $s; $s = sleep $s) {};
+    my ($self,%values) = @_;
+    foreach my $key (keys %values) {
+        $self->$key($values{$key});
     }
 
-    # this should block until the next server dies.
-    $this->pm_wait();
+    # skip to handling now if we won't be managing any processes.
+    $self->n_processes() or return;
 
-  }# while 1
+    # call the (possibly overloaded) management initialization hook.
+    $self->role("manager");
+    $self->managing_init();
+    $self->pm_notify("initialized");
 
-HANDLING:
+    my $manager_pid = $$;
 
-  # forget any children we had been collecting.
-  delete $this->{PIDS};
+    MANAGING_LOOP: while (1) {
+        
+        # if the calling process goes away, perform cleanup.
+        #getppid() == 1 and
+        #  return $self->pm_die("calling process has died");
+        
+        $self->n_processes() > 0 or
+            return $self->pm_die();
+        
+        # while we have fewer servers than we want.
+        PIDS: while ($self->pid_count < $self->n_processes()) {
+            
+            if (my $pid = fork()) {
+                # the manager remembers the server.
+                $self->add_pid($pid => { pid => $pid });
+                $self->pm_notify("server (pid $pid) started");
+            
+             } 
+             elsif (! defined $pid) {
+                 return $self->pm_abort("fork: $!");
+            
+             } 
+             else {
+                 $self->MANAGER_PID($manager_pid);
+                 # the server exits the managing loop.
+                 last MANAGING_LOOP;
+             }
+            
+             for (my $s = $self->start_delay(); $s; $s = sleep $s) {};
+        }
+        
+        # this should block until the next server dies.
+        $self->pm_wait();
+        
+    }# while 1
 
-  # call the (possibly overloaded) handling init hook
-  $this->role("server");
-  $this->handling_init();
-  $this->pm_notify("initialized");
+    HANDLING:
 
-  # server returns 
-  return 1;
+    # forget any children we had been collecting.
+    $self->forget_all_pids;
+
+    # call the (possibly overloaded) handling init hook
+    $self->role("server");
+    $self->handling_init();
+    $self->pm_notify("initialized");
+
+    # server returns 
+    return 1;
 }
 
 sub managing_init {
-  my ($this) = @_;
-
-  # begin to handle signals.
-  # We do NOT want SA_RESTART in the process manager.
-  # -- we want start the shutdown sequence immediately upon SIGTERM.
-  unless ($this->no_signals()) {
-    sigaction(SIGTERM, $this->{sigaction_no_sa_restart}) or
-	$this->pm_warn("sigaction: SIGTERM: $!");
-    sigaction(SIGHUP,  $this->{sigaction_no_sa_restart}) or
-	$this->pm_warn("sigaction: SIGHUP: $!");
-    $SIG_CODEREF = sub { $this->sig_manager(@_) };
-  }
-
-  # change the name of this process as it appears in ps(1) output.
-  $this->pm_change_process_name("perl-fcgi-pm");
-
-  $this->pm_write_pid_file();
+    my ($self) = @_;
+    
+    # begin to handle signals.
+    # We do NOT want SA_RESTART in the process manager.
+    # -- we want start the shutdown sequence immediately upon SIGTERM.
+    unless ($self->no_signals()) {
+        sigaction(SIGTERM, $self->sigaction_no_sa_restart) 
+            or $self->pm_warn("sigaction: SIGTERM: $!");
+        sigaction(SIGHUP,  $self->sigaction_no_sa_restart) 
+            or $self->pm_warn("sigaction: SIGHUP: $!");
+        $SIG_CODEREF = sub { $self->sig_manager(@_) };
+    }
+    
+    # change the name of this process as it appears in ps(1) output.
+    $self->pm_change_process_name("perl-fcgi-pm");
+    
+    $self->pm_write_pid_file();
 }
 
 sub pm_die {
-  my ($this,$msg,$n) = @_;
-
-  # stop handling signals.
-  undef $SIG_CODEREF;
-  $SIG{HUP}  = 'DEFAULT';
-  $SIG{TERM} = 'DEFAULT';
-
-  $this->pm_remove_pid_file();
-
-  # prepare to die no matter what.
-  if (defined $this->die_timeout()) {
-    $SIG{ALRM} = sub { $this->pm_abort("wait timeout") };
-    alarm $this->die_timeout();
-  }
-
-  # send a TERM to each of the servers.
-  if (my @pids = keys %{$this->{PIDS}}) {
-    $this->pm_notify("sending TERM to PIDs, @pids");
-    kill "TERM", @pids;
-  }
-
-  # wait for the servers to die.
-  while (%{$this->{PIDS}}) {
-    $this->pm_wait();
-  }
-
-  # die already.
-  $this->pm_exit("dying: ".$msg,$n);
+    my ($self, $msg, $n) = @_;
+    
+    # stop handling signals.
+    undef $SIG_CODEREF;
+    $SIG{HUP}  = 'DEFAULT';
+    $SIG{TERM} = 'DEFAULT';
+    
+    $self->pm_remove_pid_file();
+    
+    # prepare to die no matter what.
+    if (defined $self->die_timeout()) {
+        $SIG{ALRM} = sub { $self->pm_abort("wait timeout") };
+        alarm $self->die_timeout();
+    }
+    
+    # send a TERM to each of the servers.
+    if (my @pids = $self->get_all_pids) {
+        $self->pm_notify("sending TERM to PIDs, @pids");
+        kill TERM => @pids;
+    }
+    
+    # wait for the servers to die.
+    while ($self->has_pids) {
+        $self->pm_wait();
+    }
+    
+    # die already.
+    $self->pm_exit("dying: ".$msg,$n);
 }
 
 sub pm_wait {
-  my ($this) = @_;
-
-  # wait for the next server to die.
-  next if (my $pid = wait()) < 0;
-
-  # notify when one of our servers have died.
-  delete $this->{PIDS}->{$pid} and
-    $this->pm_notify("server (pid $pid) exited with status $?");
-
-  return $pid;
+    my ($self) = @_;
+    
+    # wait for the next server to die.
+    next if (my $pid = wait()) < 0;
+    
+    # notify when one of our servers have died.
+    $self->remove_pid($pid) 
+        and $self->pm_notify("server (pid $pid) exited with status $?");
+    
+    return $pid;
 }
 
 sub pm_write_pid_file {
-  my ($this,$fname) = @_;
-  $fname ||= $this->pid_fname() or return;
-  if (!open PIDFILE, ">$fname") {
-    $this->pm_warn("open: $fname: $!");
-    return;
-  }
-  print PIDFILE "$$\n";
-  close PIDFILE;
+    my ($self,$fname) = @_;
+    $fname ||= $self->pid_fname() or return;
+    if (!open PIDFILE, ">", "$fname") {
+        $self->pm_warn("open: $fname: $!");
+        return;
+    }
+    print PIDFILE "$$\n";
+    close PIDFILE;
 }
 
 sub pm_remove_pid_file {
-  my ($this,$fname) = @_;
-  $fname ||= $this->pid_fname() or return;
-  my $ret = unlink($fname) or $this->pm_warn("unlink: $fname: $!");
-  return $ret;
+    my ($self,$fname) = @_;
+    $fname ||= $self->pid_fname() or return;
+    my $ret = unlink($fname) or $self->pm_warn("unlink: $fname: $!");
+    return $ret;
 }
 
 sub sig_sub {
-  $SIG_CODEREF->(@_) if ref $SIG_CODEREF;
+    $SIG_CODEREF->(@_) if ref $SIG_CODEREF;
 }
 
 
 sub sig_manager {
-  my ($this,$name) = @_;
-  if ($name eq "TERM") {
-    $this->pm_notify("received signal $name");
-    $this->pm_die("safe exit from signal $name");
-  } elsif ($name eq "HUP") {
-    # send a TERM to each of the servers, and pretend like nothing happened..
-    if (my @pids = keys %{$this->{PIDS}}) {
-      $this->pm_notify("sending TERM to PIDs, @pids");
-      kill "TERM", @pids;
+    my ($self,$name) = @_;
+    if ($name eq "TERM") {
+        $self->pm_notify("received signal $name");
+        $self->pm_die("safe exit from signal $name");
+    } 
+    elsif ($name eq "HUP") {
+        # send a TERM to each of the servers, and pretend like nothing happened..
+        if (my @pids = $self->get_all_pids) {
+            $self->pm_notify("sending TERM to PIDs, @pids");
+            kill TERM => @pids;
+        }
+    } 
+    else {
+        $self->pm_notify("ignoring signal $name");
     }
-  } else {
-    $this->pm_notify("ignoring signal $name");
-  }
 }
 
 sub handling_init {
-  my ($this) = @_;
-
-  # begin to handle signals.
-  # We'll want accept(2) to return -1(EINTR) on caught signal..
-  unless ($this->no_signals()) {
-    sigaction(SIGTERM, $this->{sigaction_no_sa_restart}) or $this->pm_warn("sigaction: SIGTERM: $!");
-    sigaction(SIGHUP,  $this->{sigaction_no_sa_restart}) or $this->pm_warn("sigaction: SIGHUP: $!");
-    $SIG_CODEREF = sub { $this->sig_handler(@_) };
-  }
-
-  # change the name of this process as it appears in ps(1) output.
-  $this->pm_change_process_name("perl-fcgi");
+    my ($self) = @_;
+    
+    # begin to handle signals.
+    # We'll want accept(2) to return -1(EINTR) on caught signal..
+    unless ($self->no_signals()) {
+        sigaction(SIGTERM, $self->{sigaction_no_sa_restart}) 
+            or $self->pm_warn("sigaction: SIGTERM: $!");
+        sigaction(SIGHUP,  $self->{sigaction_no_sa_restart}) 
+            or $self->pm_warn("sigaction: SIGHUP: $!");
+        $SIG_CODEREF = sub { $self->sig_handler(@_) };
+    }
+    
+    # change the name of this process as it appears in ps(1) output.
+    $self->pm_change_process_name("perl-fcgi");
 }
 
 
 sub pm_pre_dispatch {
-  my ($this) = @_;
-
-  # Now, we want the request to continue unhindered..
-  unless ($this->no_signals()) {
-    sigaction(SIGTERM, $this->{sigaction_sa_restart}) or $this->pm_warn("sigaction: SIGTERM: $!");
-    sigaction(SIGHUP,  $this->{sigaction_sa_restart}) or $this->pm_warn("sigaction: SIGHUP: $!");
-  }
+    my ($self) = @_;
+    
+    # Now, we want the request to continue unhindered..
+    unless ($self->no_signals()) {
+        sigaction(SIGTERM, $self->sigaction_sa_restart) 
+            or $self->pm_warn("sigaction: SIGTERM: $!");
+        sigaction(SIGHUP,  $self->sigaction_sa_restart) 
+            or $self->pm_warn("sigaction: SIGHUP: $!");
+    }
 }
 
 sub pm_post_dispatch {
-  my ($this) = @_;
-  if ($this->pm_received_signal("TERM")) {
-    $this->pm_exit("safe exit after SIGTERM");
-  }
-  if ($this->pm_received_signal("HUP")) {
-    $this->pm_exit("safe exit after SIGHUP");
-  }
-  if ($this->{MANAGER_PID} and getppid() != $this->{MANAGER_PID}) {
-    $this->pm_exit("safe exit: manager has died");
-  }
-  # We'll want accept(2) to return -1(EINTR) on caught signal..
-  unless ($this->no_signals()) {
-    sigaction(SIGTERM, $this->{sigaction_no_sa_restart}) or $this->pm_warn("sigaction: SIGTERM: $!");
-    sigaction(SIGHUP,  $this->{sigaction_no_sa_restart}) or $this->pm_warn("sigaction: SIGHUP: $!");
-  }
+    my ($self) = @_;
+    if ($self->pm_received_signal("TERM")) {
+        $self->pm_exit("safe exit after SIGTERM");
+    }
+    if ($self->pm_received_signal("HUP")) {
+        $self->pm_exit("safe exit after SIGHUP");
+    }
+    if ($self->MANAGER_PID and getppid() != $self->MANAGER_PID) {
+        $self->pm_exit("safe exit: manager has died");
+    }
+    # We'll want accept(2) to return -1(EINTR) on caught signal..
+    unless ($self->no_signals()) {
+        sigaction(SIGTERM, $self->sigaction_no_sa_restart) 
+            or $self->pm_warn("sigaction: SIGTERM: $!");
+        sigaction(SIGHUP,  $self->sigaction_no_sa_restart) 
+            or $self->pm_warn("sigaction: SIGHUP: $!");
+    }
 }
 
 
 sub sig_handler {
-  my ($this,$name) = @_;
-  $this->pm_received_signal($name,1);
+    my ($self, $name) = @_;
+    $self->pm_received_signal($name, 1);
 }
 
-#sub self_or_default {
-#  return @_ if defined $_[0] and !ref $_[0] and $_[0] eq 'FCGI::Engine::ProcManager';
-#  if (!defined $_[0] or (ref($_[0]) ne 'FCGI::Engine::ProcManager' and
-#			 !UNIVERSAL::isa($_[0],'FCGI::Engine::ProcManager'))) {
-#    $Q or $Q = $FCGI::Engine::ProcManager::Default->new;
-#    unshift @_, $Q;
-#  }
-#  return wantarray ? @_ : $Q;
-#}
-
 sub pm_change_process_name {
-  my ($this,$name) = @_;
-  $0 = $name;
+    my ($self, $name) = @_;
+    $0 = $name;
 }
 
 sub pm_received_signal {
-  my ($this,$sig,$received) = @_;
-  $sig or return $this->{SIG_RECEIVED};
-  $received and $this->{SIG_RECEIVED}->{$sig}++;
-  return $this->{SIG_RECEIVED}->{$sig};
+    my ($self,$sig,$received) = @_;
+    $sig or return $self->SIG_RECEIVED;
+    $received and $self->SIG_RECEIVED->{$sig}++;
+    return $self->SIG_RECEIVED->{$sig};
 }
-
-sub pm_parameter {
-  my ($this,$key,$value) = @_;
-  defined $value and $this->{$key} = $value;
-  return $this->{$key};
-}
-
-
-sub n_processes     { shift->pm_parameter("n_processes",     @_); }
-sub pid_fname       { shift->pm_parameter("pid_fname",       @_); }
-sub no_signals      { shift->pm_parameter("no_signals",      @_); }
-sub die_timeout     { shift->pm_parameter("die_timeout",     @_); }
-sub role            { shift->pm_parameter("role",            @_); }
-sub start_delay     { shift->pm_parameter("start_delay",     @_); }
 
 sub pm_warn {
-  my ($this,$msg) = @_;
-  $this->pm_notify($msg);
+    my ($self,$msg) = @_;
+    $self->pm_notify($msg);
 }
 
 sub pm_notify {
-  my ($this,$msg) = @_;
-  $msg =~ s/\s*$/\n/;
-  print STDERR "FastCGI: ".$this->role()." (pid $$): ".$msg;
+    my ($self,$msg) = @_;
+    $msg =~ s/\s*$/\n/;
+    print STDERR "FastCGI: ".$self->role()." (pid $$): ".$msg;
 }
 
 
 sub pm_exit {
-  my ($this,$msg,$n) = @_;
-  $n ||= 0;
-
-  # if we still have children at this point, something went wrong.
-  # SIGKILL them now.
-  kill "KILL", keys %{$this->{PIDS}} if $this->{PIDS};
-
-  $this->pm_warn($msg);
-  $@ = $msg;
-  exit $n;
+    my ($self,$msg,$n) = @_;
+    $n ||= 0;
+    
+    # if we still have children at this point, something went wrong.
+    # SIGKILL them now.
+    kill KILL => $self->get_all_pids 
+        if $self->has_pids;
+    
+    $self->pm_warn($msg);
+    $@ = $msg;
+    exit $n;
 }
 
 sub pm_abort {
-  my ($this,$msg,$n) = @_;
-  $n ||= 1;
-  $this->pm_exit($msg,1);
+    my ($self,$msg,$n) = @_;
+    $n ||= 1;
+    $self->pm_exit($msg,1);
 }
 
 1;
+
 __END__
 
 =pod

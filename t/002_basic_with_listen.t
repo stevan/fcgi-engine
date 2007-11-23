@@ -57,8 +57,13 @@ else {
     my $pid = $e->pid_obj;
     isa_ok($pid, 'File::Pid');
 
-    ok($pid->running, '... our daemon is running');
+    ok($pid->running, '... our daemon is running (pid: ' . $pid->pid . ')');
 
     kill TERM => $pid->pid;
+    
+    sleep(1); # give is a moment to die ...
+
+    ok(!$pid->running, '... our daemon is no longer running (pid: ' . $pid->pid . ')');
+
     unlink $SOCKET;
 }

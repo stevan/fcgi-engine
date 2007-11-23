@@ -11,7 +11,7 @@ use File::Pid;
 
 use FCGI::Engine::ProcManager;
 
-use constant DEBUG => 0;
+use constant DEBUG => 1;
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
@@ -52,14 +52,10 @@ has 'detach' => (
     predicate   => 'should_detach',
 );
 
-subtype 'FCGI::Engine::ProcManager'
-    => as 'Str'
-    => where { $_->isa('FCGI::Engine::ProcManager') };
-
 has 'manager' => (
     metaclass   => 'Getopt',
     is          => 'ro',
-    isa         => 'FCGI::Engine::ProcManager',
+    isa         => 'Str',
     default     => sub { 'FCGI::Engine::ProcManager' },
     cmd_aliases => [qw[ manager M ]],
 );
