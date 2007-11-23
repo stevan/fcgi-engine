@@ -156,11 +156,11 @@ sub run {
 
         $self->daemon_detach() if $self->detach;
         
-        $proc_manager->pm_manage();   
+        $proc_manager->manage();   
     }
 
     while($request->Accept() >= 0) {
-        $proc_manager && $proc_manager->pm_pre_dispatch();
+        $proc_manager && $proc_manager->pre_dispatch();
 
         # Cargo-culted from Catalyst::Engine::FastCGI ...
         if ( $ENV{SERVER_SOFTWARE} && $ENV{SERVER_SOFTWARE} =~ /lighttpd/ ) {
@@ -170,7 +170,7 @@ sub run {
         CGI::_reset_globals();
         $handler_class->handler(CGI->new);
 
-        $proc_manager && $proc_manager->pm_post_dispatch();
+        $proc_manager && $proc_manager->post_dispatch();
     }
 }
 

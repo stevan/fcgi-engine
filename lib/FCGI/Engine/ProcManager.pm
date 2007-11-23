@@ -6,7 +6,7 @@ use MooseX::Types::Path::Class;
 
 use constant DEBUG => 1;
 
-use POSIX qw(:signal_h);
+use POSIX qw(SA_RESTART SIGTERM SIGHUP);
 
 our $VERSION   = '0.01'; 
 our $AUTHORITY = 'cpan:STEVAN';
@@ -34,14 +34,13 @@ has 'die_timeout' => (
 has 'n_processes' => (
     is       => 'rw',
     isa      => 'Int',
-    required => 1,
+    default  => sub { 0 }
 ); 
 
 has 'pid_fname' => (
     is       => 'rw',
     isa      => 'Path::Class::File',
     coerce   => 1,
-    required => 1,
 );
 
 our $SIG_CODEREF;
@@ -55,13 +54,13 @@ has 'no_signals' => (
 has 'sigaction_no_sa_restart' => (is => 'rw', isa => 'POSIX::SigAction');
 has 'sigaction_sa_restart'    => (is => 'rw', isa => 'POSIX::SigAction');
 
-has 'SIG_RECEIVED' => (
+has 'signals_received' => (
     is      => 'rw',
     isa     => 'HashRef',
     default => sub { +{} }
 );
 
-has 'MANAGER_PID' => (
+has 'manager_pid' => (
     is  => 'rw',
     isa => 'Int',
 );
@@ -100,7 +99,7 @@ sub BUILD {
 }
 
 
-sub pm_manage {
+sub manage {
     my ($self,%values) = @_;
     foreach my $key (keys %values) {
         $self->$key($values{$key});
@@ -111,8 +110,8 @@ sub pm_manage {
 
     # call the (possibly overloaded) management initialization hook.
     $self->role("manager");
-    $self->managing_init();
-    $self->pm_notify("initialized");
+    $self->manager_init();
+    $self->notify("initialized");
 
     my $manager_pid = $$;
 
@@ -120,26 +119,26 @@ sub pm_manage {
         
         # if the calling process goes away, perform cleanup.
         #getppid() == 1 and
-        #  return $self->pm_die("calling process has died");
+        #  return $self->die("calling process has died");
         
         $self->n_processes() > 0 or
-            return $self->pm_die();
+            return $self->die();
         
         # while we have fewer servers than we want.
         PIDS: while ($self->pid_count < $self->n_processes()) {
             
             if (my $pid = fork()) {
                 # the manager remembers the server.
-                $self->add_pid($pid => { pid => $pid });
-                $self->pm_notify("server (pid $pid) started");
+                $self->add_pid($pid);
+                $self->notify("server (pid $pid) started");
             
              } 
              elsif (! defined $pid) {
-                 return $self->pm_abort("fork: $!");
+                 return $self->abort("fork: $!");
             
              } 
              else {
-                 $self->MANAGER_PID($manager_pid);
+                 $self->manager_pid($manager_pid);
                  # the server exits the managing loop.
                  last MANAGING_LOOP;
              }
@@ -148,7 +147,7 @@ sub pm_manage {
         }
         
         # this should block until the next server dies.
-        $self->pm_wait();
+        $self->wait();
         
     }# while 1
 
@@ -160,33 +159,33 @@ sub pm_manage {
     # call the (possibly overloaded) handling init hook
     $self->role("server");
     $self->handling_init();
-    $self->pm_notify("initialized");
+    $self->notify("initialized");
 
     # server returns 
     return 1;
 }
 
-sub managing_init {
+sub manager_init {
     my ($self) = @_;
     
     # begin to handle signals.
     # We do NOT want SA_RESTART in the process manager.
     # -- we want start the shutdown sequence immediately upon SIGTERM.
     unless ($self->no_signals()) {
-        sigaction(SIGTERM, $self->sigaction_no_sa_restart) 
-            or $self->pm_warn("sigaction: SIGTERM: $!");
-        sigaction(SIGHUP,  $self->sigaction_no_sa_restart) 
-            or $self->pm_warn("sigaction: SIGHUP: $!");
+        POSIX::sigaction(POSIX::SIGTERM, $self->sigaction_no_sa_restart) 
+            or $self->warn("sigaction: SIGTERM: $!");
+        POSIX::sigaction(POSIX::SIGHUP,  $self->sigaction_no_sa_restart) 
+            or $self->warn("sigaction: SIGHUP: $!");
         $SIG_CODEREF = sub { $self->sig_manager(@_) };
     }
     
     # change the name of this process as it appears in ps(1) output.
-    $self->pm_change_process_name("perl-fcgi-pm");
+    $self->change_process_name("perl-fcgi-pm");
     
-    $self->pm_write_pid_file();
+    $self->write_pid_file();
 }
 
-sub pm_die {
+sub die : method {
     my ($self, $msg, $n) = @_;
     
     # stop handling signals.
@@ -194,57 +193,57 @@ sub pm_die {
     $SIG{HUP}  = 'DEFAULT';
     $SIG{TERM} = 'DEFAULT';
     
-    $self->pm_remove_pid_file();
+    $self->remove_pid_file();
     
     # prepare to die no matter what.
     if (defined $self->die_timeout()) {
-        $SIG{ALRM} = sub { $self->pm_abort("wait timeout") };
+        $SIG{ALRM} = sub { $self->abort("wait timeout") };
         alarm $self->die_timeout();
     }
     
     # send a TERM to each of the servers.
     if (my @pids = $self->get_all_pids) {
-        $self->pm_notify("sending TERM to PIDs, @pids");
+        $self->notify("sending TERM to PIDs, @pids");
         kill TERM => @pids;
     }
     
     # wait for the servers to die.
     while ($self->has_pids) {
-        $self->pm_wait();
+        $self->wait();
     }
     
     # die already.
-    $self->pm_exit("dying: ".$msg,$n);
+    $self->exit("dying: ".$msg,$n);
 }
 
-sub pm_wait {
+sub wait : method {
     my ($self) = @_;
     
     # wait for the next server to die.
-    next if (my $pid = wait()) < 0;
+    next if (my $pid = CORE::wait()) < 0;
     
     # notify when one of our servers have died.
     $self->remove_pid($pid) 
-        and $self->pm_notify("server (pid $pid) exited with status $?");
+        and $self->notify("server (pid $pid) exited with status $?");
     
     return $pid;
 }
 
-sub pm_write_pid_file {
+sub write_pid_file {
     my ($self,$fname) = @_;
     $fname ||= $self->pid_fname() or return;
     if (!open PIDFILE, ">", "$fname") {
-        $self->pm_warn("open: $fname: $!");
+        $self->warn("open: $fname: $!");
         return;
     }
     print PIDFILE "$$\n";
     close PIDFILE;
 }
 
-sub pm_remove_pid_file {
+sub remove_pid_file {
     my ($self,$fname) = @_;
     $fname ||= $self->pid_fname() or return;
-    my $ret = unlink($fname) or $self->pm_warn("unlink: $fname: $!");
+    my $ret = unlink($fname) or $self->warn("unlink: $fname: $!");
     return $ret;
 }
 
@@ -256,18 +255,18 @@ sub sig_sub {
 sub sig_manager {
     my ($self,$name) = @_;
     if ($name eq "TERM") {
-        $self->pm_notify("received signal $name");
-        $self->pm_die("safe exit from signal $name");
+        $self->notify("received signal $name");
+        $self->die("safe exit from signal $name");
     } 
     elsif ($name eq "HUP") {
         # send a TERM to each of the servers, and pretend like nothing happened..
         if (my @pids = $self->get_all_pids) {
-            $self->pm_notify("sending TERM to PIDs, @pids");
+            $self->notify("sending TERM to PIDs, @pids");
             kill TERM => @pids;
         }
     } 
     else {
-        $self->pm_notify("ignoring signal $name");
+        $self->notify("ignoring signal $name");
     }
 }
 
@@ -277,81 +276,81 @@ sub handling_init {
     # begin to handle signals.
     # We'll want accept(2) to return -1(EINTR) on caught signal..
     unless ($self->no_signals()) {
-        sigaction(SIGTERM, $self->{sigaction_no_sa_restart}) 
-            or $self->pm_warn("sigaction: SIGTERM: $!");
-        sigaction(SIGHUP,  $self->{sigaction_no_sa_restart}) 
-            or $self->pm_warn("sigaction: SIGHUP: $!");
+        POSIX::sigaction(POSIX::SIGTERM, $self->{sigaction_no_sa_restart}) 
+            or $self->warn("sigaction: SIGTERM: $!");
+        POSIX::sigaction(POSIX::SIGHUP,  $self->{sigaction_no_sa_restart}) 
+            or $self->warn("sigaction: SIGHUP: $!");
         $SIG_CODEREF = sub { $self->sig_handler(@_) };
     }
     
     # change the name of this process as it appears in ps(1) output.
-    $self->pm_change_process_name("perl-fcgi");
+    $self->change_process_name("perl-fcgi");
 }
 
 
-sub pm_pre_dispatch {
+sub pre_dispatch {
     my ($self) = @_;
     
     # Now, we want the request to continue unhindered..
     unless ($self->no_signals()) {
-        sigaction(SIGTERM, $self->sigaction_sa_restart) 
-            or $self->pm_warn("sigaction: SIGTERM: $!");
-        sigaction(SIGHUP,  $self->sigaction_sa_restart) 
-            or $self->pm_warn("sigaction: SIGHUP: $!");
+        POSIX::sigaction(POSIX::SIGTERM, $self->sigaction_sa_restart) 
+            or $self->warn("sigaction: SIGTERM: $!");
+        POSIX::sigaction(POSIX::SIGHUP,  $self->sigaction_sa_restart) 
+            or $self->warn("sigaction: SIGHUP: $!");
     }
 }
 
-sub pm_post_dispatch {
+sub post_dispatch {
     my ($self) = @_;
-    if ($self->pm_received_signal("TERM")) {
-        $self->pm_exit("safe exit after SIGTERM");
+    if ($self->received_signal("TERM")) {
+        $self->exit("safe exit after SIGTERM");
     }
-    if ($self->pm_received_signal("HUP")) {
-        $self->pm_exit("safe exit after SIGHUP");
+    if ($self->received_signal("HUP")) {
+        $self->exit("safe exit after SIGHUP");
     }
-    if ($self->MANAGER_PID and getppid() != $self->MANAGER_PID) {
-        $self->pm_exit("safe exit: manager has died");
+    if ($self->manager_pid and getppid() != $self->manager_pid) {
+        $self->exit("safe exit: manager has died");
     }
     # We'll want accept(2) to return -1(EINTR) on caught signal..
     unless ($self->no_signals()) {
-        sigaction(SIGTERM, $self->sigaction_no_sa_restart) 
-            or $self->pm_warn("sigaction: SIGTERM: $!");
-        sigaction(SIGHUP,  $self->sigaction_no_sa_restart) 
-            or $self->pm_warn("sigaction: SIGHUP: $!");
+        POSIX::sigaction(POSIX::SIGTERM, $self->sigaction_no_sa_restart) 
+            or $self->warn("sigaction: SIGTERM: $!");
+        POSIX::sigaction(POSIX::SIGHUP,  $self->sigaction_no_sa_restart) 
+            or $self->warn("sigaction: SIGHUP: $!");
     }
 }
 
 
 sub sig_handler {
     my ($self, $name) = @_;
-    $self->pm_received_signal($name, 1);
+    $self->received_signal($name, 1);
 }
 
-sub pm_change_process_name {
+sub change_process_name {
     my ($self, $name) = @_;
     $0 = $name;
 }
 
-sub pm_received_signal {
+sub received_signal {
     my ($self,$sig,$received) = @_;
-    $sig or return $self->SIG_RECEIVED;
-    $received and $self->SIG_RECEIVED->{$sig}++;
-    return $self->SIG_RECEIVED->{$sig};
+    $sig or return $self->signals_received;
+    $received and $self->signals_received->{$sig}++;
+    return $self->signals_received->{$sig};
 }
 
-sub pm_warn {
+sub warn : method {
     my ($self,$msg) = @_;
-    $self->pm_notify($msg);
+    $self->notify($msg);
 }
 
-sub pm_notify {
+sub notify {
     my ($self,$msg) = @_;
     $msg =~ s/\s*$/\n/;
     print STDERR "FastCGI: ".$self->role()." (pid $$): ".$msg;
 }
 
 
-sub pm_exit {
+sub exit : method {
     my ($self,$msg,$n) = @_;
     $n ||= 0;
     
@@ -360,15 +359,15 @@ sub pm_exit {
     kill KILL => $self->get_all_pids 
         if $self->has_pids;
     
-    $self->pm_warn($msg);
+    $self->warn($msg);
     $@ = $msg;
-    exit $n;
+    CORE::exit $n;
 }
 
-sub pm_abort {
+sub abort {
     my ($self,$msg,$n) = @_;
     $n ||= 1;
-    $self->pm_exit($msg,1);
+    $self->exit($msg,1);
 }
 
 1;
@@ -391,22 +390,22 @@ __END__
  my $proc_manager = FCGI::Engine::ProcManager->new({
 	n_processes => 10 
  });
- $proc_manager->pm_manage();
+ $proc_manager->manage();
  while (my $cgi = CGI::Fast->new()) {
-   $proc_manager->pm_pre_dispatch();
+   $proc_manager->pre_dispatch();
    # ... handle the request here ...
-   $proc_manager->pm_post_dispatch();
+   $proc_manager->post_dispatch();
  }
 
  # This style is also supported:
  use CGI::Fast;
- use FCGI::Engine::ProcManager qw(pm_manage pm_pre_dispatch 
-			  pm_post_dispatch);
- pm_manage( n_processes => 10 );
+ use FCGI::Engine::ProcManager qw(manage pre_dispatch 
+			  post_dispatch);
+ manage( n_processes => 10 );
  while (my $cgi = CGI::Fast->new()) {
-   pm_pre_dispatch();
+   pre_dispatch();
    #...
-   pm_post_dispatch();
+   post_dispatch();
  }
 
 =head1 DESCRIPTION
@@ -417,18 +416,18 @@ their web applications, and can take advantage of copy-on-write semantics
 prevalent in UNIX kernel process management.  The process manager should
 be invoked before the caller''s request loop
 
-The primary routine, C<pm_manage>, enters a loop in which it maintains a
+The primary routine, C<manage>, enters a loop in which it maintains a
 number of FastCGI servers (via fork(2)), and which reaps those servers
 when they die (via wait(2)).
 
-C<pm_manage> provides too hooks:
+C<manage> provides too hooks:
 
- C<managing_init> - called just before the manager enters the manager loop.
- C<handling_init> - called just before a server is returns from C<pm_manage>
+ C<manager_init> - called just before the manager enters the manager loop.
+ C<handling_init> - called just before a server is returns from C<manage>
 
 It is necessary for the caller, when implementing its request loop, to
-insert a call to C<pm_pre_dispatch> at the top of the loop, and then
-7C<pm_post_dispatch> at the end of the loop.
+insert a call to C<pre_dispatch> at the top of the loop, and then
+7C<post_dispatch> at the end of the loop.
 
 =head2 Signal Handling
 
@@ -495,10 +494,10 @@ default values.  The default parameter values currently are:
 
 =head1 Manager methods
 
-=head2 pm_manage
+=head2 manage
 
  instance or export
- (int) pm_manage([hash parameters])
+ (int) manage([hash parameters])
 
 DESCRIPTION:
 
@@ -510,60 +509,60 @@ instructions to intialize those handlers.
 If n_processes < 1, the managing section is subverted, and only the
 handling sequence is executed.
 
-Either returns the return value of pm_die() and/or pm_abort() (which will
+Either returns the return value of die() and/or abort() (which will
 not ever return in general), or returns 1 to the calling script to begin
 handling requests.
 
-=head2 managing_init
+=head2 manager_init
 
  instance
- () managing_init()
+ () manager_init()
 
 DESCRIPTION:
 
 Overrideable method which initializes a process manager.  In order to
 handle signals, manage the PID file, and change the process name properly,
-any method which overrides this should call SUPER::managing_init().
+any method which overrides this should call SUPER::manager_init().
 
-=head2 pm_die
+=head2 die
 
  instance or export
- () pm_die(string msg[, int exit_status])
+ () die(string msg[, int exit_status])
 
 DESCRIPTION:
 
 This method is called when a process manager receives a notification to
-shut itself down.  pm_die() attempts to shutdown the process manager
+shut itself down.  die() attempts to shutdown the process manager
 gently, sending a SIGTERM to each managed process, waiting die_timeout()
 seconds to reap each process, and then exit gracefully once all children
 are reaped, or to abort if all children are not reaped.
 
-=head2 pm_wait
+=head2 wait
 
  instance or export
- (int pid) pm_wait()
+ (int pid) wait()
 
 DESCRIPTION:
 
 This calls wait() which suspends execution until a child has exited.
 If the process ID returned by wait corresponds to a managed process,
-pm_notify() is called with the exit status of that process.
-pm_wait() returns with the return value of wait().
+notify() is called with the exit status of that process.
+wait() returns with the return value of wait().
 
-=head2 pm_write_pid_file
+=head2 write_pid_file
 
  instance or export
- () pm_write_pid_file([string filename])
+ () write_pid_file([string filename])
 
 DESCRIPTION:
 
 Writes current process ID to optionally specified file.  If no filename is
 specified, it uses the value of the C<pid_fname> parameter.
 
-=head2 pm_remove_pid_file
+=head2 remove_pid_file
 
  instance or export
- () pm_remove_pid_file()
+ () remove_pid_file()
 
 DESCRIPTION:
 
@@ -600,17 +599,17 @@ being handled.
 
 DESCRIPTION:
 
-=head2 pm_pre_dispatch
+=head2 pre_dispatch
 
  instance or export
- () pm_pre_dispatch()
+ () pre_dispatch()
 
 DESCRIPTION:
 
-=head2 pm_post_dispatch
+=head2 post_dispatch
 
  instance or export
- () pm_post_dispatch()
+ () post_dispatch()
 
 DESCRIPTION:
 
@@ -633,14 +632,14 @@ DESCRIPTION:
 This is a helper subroutine to acquire or otherwise create a singleton
 default object if one is not passed in, e.g., a method call.
 
-=head2 pm_change_process_name
+=head2 change_process_name
 
  instance or export
- () pm_change_process_name()
+ () change_process_name()
 
 DESCRIPTION:
 
-=head2 pm_received_signal
+=head2 received_signal
 
  instance or export
  () pm_received signal()
@@ -672,31 +671,31 @@ DESCRIPTION:
 
 =head1 notification and death
 
-=head2 pm_warn
+=head2 warn
 
  instance or export
- () pm_warn()
+ () warn()
 
 DESCRIPTION:
 
-=head2 pm_notify
+=head2 notify
 
  instance or export
- () pm_notify()
+ () notify()
 
 DESCRIPTION:
 
-=head2 pm_exit
+=head2 exit
 
  instance or export
- () pm_exit(string msg[, int exit_status])
+ () exit(string msg[, int exit_status])
 
 DESCRIPTION:
 
-=head2 pm_abort
+=head2 abort
 
  instance or export
- () pm_abort(string msg[, int exit_status])
+ () abort(string msg[, int exit_status])
 
 DESCRIPTION:
 

@@ -3,28 +3,29 @@
 use strict;
 use warnings;
 
-use Test::More tests => 5;
+use Test::More tests => 6;
 
 use FCGI::Engine::ProcManager;
 
 my $m;
 
-ok $m = FCGI::Engine::ProcManager->new(n_processes => 100, pid_fname => '/tmp/foo.pid');
+ok $m = FCGI::Engine::ProcManager->new();
 
-ok $m->n_processes() == 100;
+ok $m->n_processes() == 0;
+ok $m->n_processes(100) == 100;
 ok $m->n_processes(2) == 2;
 ok $m->n_processes(0) == 0;
 
-ok !$m->pm_manage();
+ok !$m->manage();
 
 #ok $m->n_processes(-3);
-#eval { $m->pm_manage(); };
+#eval { $m->manage(); };
 #ok $@ =~ /dying from number of processes exception: -3/;
 #undef $@;
 
 if ($ENV{PM_N_PROCESSES}) {
   $m->n_processes($ENV{PM_N_PROCESSES});
-  $m->pm_manage();
+  $m->manage();
   sample_request_loop($m);
 }
 
@@ -40,7 +41,7 @@ sub sample_request_loop {
     sleep $t1;
     # (Here is where accept-fail-on-intr would exit request loop.)
 
-    $m->pm_pre_dispatch();
+    $m->pre_dispatch();
 
     # Simulate a request dispatch.
     my $t = int(rand(3)+2);
@@ -50,6 +51,6 @@ sub sample_request_loop {
       last unless $t;
     }
 
-    $m->pm_post_dispatch();
+    $m->post_dispatch();
   }
 }
