@@ -230,7 +230,7 @@ FCGI::Engine - A flexible engine for running FCGI-based applications
 This module helps manage FCGI based web applications by providing a 
 wrapper which handles most of the low-level FCGI details for you. It
 can run FCGI programs as simple scripts or as full standalone 
-socket based servers who are managed by L<FCGI::ProcManager>.
+socket based servers who are managed by L<FCGI::Engine::ProcManager>.
 
 The code is largely based (*cough* stolen *cough*) on the 
 L<Catalyst::Engine::FastCGI> module, and provides a  command line 
@@ -265,7 +265,7 @@ also specify a location for the pidfile.
 =item I<--nproc -n>
 
 This should be an integer specifying the number of FCGI processes
-that L<FCGI::ProcManager> should start up. The default is 1.
+that L<FCGI::Engine::ProcManager> should start up. The default is 1.
 
 =item I<--pidfile -p>
 
@@ -281,7 +281,7 @@ This parameter only used if the I<listen> parameter is specified.
 =item I<--manager -m>
 
 This allows you to pass the name of a L<FCGI::ProcManager> subclass 
-to use. The default is to use L<FCGI::ProcManager>, and any value
+to use. The default is to use L<FCGI::Engine::ProcManager>, and any value
 passed to this parameter B<must> be a subclass of L<FCGI::ProcManager>.
 
 =back
@@ -420,7 +420,7 @@ stuffed them in here.
 
 =item L<MooseX::Getopt>
 
-=item L<FCGI::ProcManager>
+=item L<FCGI::Engine::ProcManager>
 
 =back
 
