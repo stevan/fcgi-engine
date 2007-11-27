@@ -18,10 +18,17 @@ our $AUTHORITY = 'cpan:STEVAN';
 
 with 'MooseX::Getopt';
 
+subtype 'FCGI::Engine::ListenerPort'
+    => as 'Int'
+    => where { $_ >= 1 && $_ <= 65535 };
+    
+subtype 'FCGI::Engine::Listener' 
+    => as 'FCGI::Engine::ListenerPort | Path::Class::File';
+
 has 'listen' => (
     metaclass   => 'Getopt',
     is          => 'ro',
-    isa         => 'Path::Class::File',
+    isa         => 'FCGI::Engine::Listener',
     coerce      => 1,
     cmd_aliases => [qw[ listen l ]],
     predicate   => 'is_listening',

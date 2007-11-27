@@ -7,10 +7,7 @@ $|++;
 
 use FCGI::Engine::Manager::Server;
 
-use Best [
-    [ qw[YAML::Syck YAML] ], 
-    [ qw[LoadFile] ]
-];
+use Config::Any;
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
@@ -29,14 +26,15 @@ has '_servers' => (
     isa       => 'ArrayRef[FCGI::Engine::Manager::Server]',
     lazy      => 1,
     default   => sub {
-        my $self = shift;
-        my $servers = LoadFile($self->conf->stringify)->{servers};
+        my $self   = shift;
+        my $file   = $self->conf->stringify;
+        my $config = Config::Any->load_files({ files => [ $file ] })->[0]->{$file};
         return [ 
             map { 
                 $_->{server_class} ||= "FCGI::Engine::Manager::Server";
                 Class::MOP::load_class($_->{server_class});
                 $_->{server_class}->new(%$_);
-            } @$servers 
+            } @{$config->{servers}} 
         ];
     },
 );
