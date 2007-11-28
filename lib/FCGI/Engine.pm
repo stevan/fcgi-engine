@@ -1,14 +1,13 @@
 
 package FCGI::Engine;
 use Moose;
-use Moose::Util::TypeConstraints;
-use MooseX::Types::Path::Class;
 
 use POSIX ();
 use FCGI;
 use CGI;
 use File::Pid;
 
+use FCGI::Engine::Types;
 use FCGI::Engine::ProcManager;
 
 use constant DEBUG => 1;
@@ -17,13 +16,6 @@ our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
 with 'MooseX::Getopt';
-
-subtype 'FCGI::Engine::ListenerPort'
-    => as 'Int'
-    => where { $_ >= 1 && $_ <= 65535 };
-    
-subtype 'FCGI::Engine::Listener' 
-    => as 'FCGI::Engine::ListenerPort | Path::Class::File';
 
 has 'listen' => (
     metaclass   => 'Getopt',
@@ -62,7 +54,7 @@ has 'detach' => (
 has 'manager' => (
     metaclass   => 'Getopt',
     is          => 'ro',
-    isa         => 'Str',
+    isa         => 'ClassName',
     default     => sub { 'FCGI::Engine::ProcManager' },
     cmd_aliases => [qw[ manager M ]],
 );
@@ -72,7 +64,7 @@ has 'manager' => (
 has '_handler_class' => (
     reader   => 'handler_class',
     init_arg => 'handler_class',
-    isa      => 'Str',
+    isa      => 'ClassName',
     required => 1,
 );
 
@@ -88,20 +80,6 @@ has '_pre_fork_init' => (
     init_arg  => 'pre_fork_init',
     isa       => 'CodeRef',
     predicate => 'has_pre_fork_init',
-);
-
-has '_pid_obj' => (
-    reader    => 'pid_obj',
-    isa       => 'File::Pid',
-    lazy      => 1,
-    default   => sub {
-        my $self = shift;
-        ($self->has_pidfile)
-            || confess "There is no pidfile specified, so why are you asking for a pid object??";
-        (-f $self->pidfile)
-            || confess "The pidfile does not exist yet, you must call ->run first";
-        File::Pid->new({ file => $self->pidfile })
-    }
 );
 
 ## methods ...
@@ -372,14 +350,6 @@ Returns the value passed on the command line with I<--manager>.
 
 A predicate telling you if anything was passed to the 
 I<pre_fork_init> constructor parameter.
-
-=item B<pid_obj>
-
-This will return a L<File::Pid> object to represent 
-the pidfile passed with the I<--pidfile> option. This 
-method will throw an exeception if you call it without
-having specified the I<--pidfile> option, or if the 
-pidfile has not yet been created.
 
 =back
 

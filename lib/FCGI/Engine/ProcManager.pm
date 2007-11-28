@@ -1,18 +1,16 @@
 package FCGI::Engine::ProcManager;
 use Moose;
-use Moose::Util::TypeConstraints;
 use MooseX::Params::Validate;
 use MooseX::AttributeHelpers;
-use MooseX::Types::Path::Class;
 
 use constant DEBUG => 1;
 
 use POSIX qw(SA_RESTART SIGTERM SIGHUP);
 
+use FCGI::Engine::Types;
+
 our $VERSION   = '0.01'; 
 our $AUTHORITY = 'cpan:STEVAN';
-
-enum 'FCGI::Engine::ProcManager::Role' => qw[manager server];
 
 has 'role' => (
     is      => 'rw',

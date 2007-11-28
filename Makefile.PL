@@ -10,14 +10,14 @@ license 'perl';
     || die "This module is not for Window, sorry.";
 
 # prereqs
-requires 'Moose';
+requires 'Moose' => 0.32;
 requires 'MooseX::Types::Path::Class';
 requires 'File::Pid';
-requires 'FCGI::ProcManager';
+requires 'Declare::Constraints::Simple';
 requires 'FCGI';
 requires 'CGI';
 requires 'POSIX';
-requires 'Best'; # we need either YAML or YAML::Syck
+requires 'Config::Any';
 
 # things the tests need
 build_requires 'Test::More';

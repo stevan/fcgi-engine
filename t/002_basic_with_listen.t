@@ -54,7 +54,7 @@ else {
     ok(-S $SOCKET, '... our socket was created');
     ok(-f $PIDFILE, '... our pidfile was created');
 
-    my $pid = $e->pid_obj;
+    my $pid = File::Pid->new( { file => $e->pidfile } );
     isa_ok($pid, 'File::Pid');
 
     ok($pid->running, '... our daemon is running (pid: ' . $pid->pid . ')');

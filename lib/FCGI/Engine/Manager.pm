@@ -1,10 +1,10 @@
 
 package FCGI::Engine::Manager;
 use Moose;
-use MooseX::Types::Path::Class;
 
 $|++;
 
+use FCGI::Engine::Types;
 use FCGI::Engine::Manager::Server;
 
 use Config::Any;
@@ -21,20 +21,35 @@ has 'conf' => (
     required => 1,
 );
 
+has '_config' => (
+    is       => 'ro',
+    isa      => 'FCGI::Engine::Manager::Config',
+    lazy     => 1,
+    default  => sub {
+        my $self   = shift;
+        my $file   = $self->conf->stringify;
+        my $config = Config::Any->load_files({ 
+            files   => [ $file ],
+            use_ext => 1
+        })->[0]->{$file};
+        #use Data::Dumper; 
+        #warn Dumper $config;
+        return $config;
+    }
+);
+
 has '_servers' => (
     reader    => 'servers',
     isa       => 'ArrayRef[FCGI::Engine::Manager::Server]',
     lazy      => 1,
     default   => sub {
-        my $self   = shift;
-        my $file   = $self->conf->stringify;
-        my $config = Config::Any->load_files({ files => [ $file ] })->[0]->{$file};
+        my $self = shift;
         return [ 
             map { 
                 $_->{server_class} ||= "FCGI::Engine::Manager::Server";
                 Class::MOP::load_class($_->{server_class});
                 $_->{server_class}->new(%$_);
-            } @{$config->{servers}} 
+            } @{$self->_config} 
         ];
     },
 );
@@ -80,6 +95,13 @@ sub start {
 }
 
 sub status {
+    # FIXME:
+    # there must be a better way to do this, 
+    # and even if there isn't we should come
+    # up with a better way to display them
+    # (oh yeah and filter out things not related
+    # to us as well)
+    # - SL
     join "\n" => map { chomp; s/\s+$//; $_ } `ps auxwww | grep fcgi`;    
 }
 

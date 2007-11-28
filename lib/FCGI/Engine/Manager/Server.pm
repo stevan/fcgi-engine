@@ -1,8 +1,8 @@
 package FCGI::Engine::Manager::Server;
 use Moose;
-use MooseX::Types::Path::Class;
 
 use File::Pid;
+use FCGI::Engine::Types;
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
@@ -16,6 +16,13 @@ has 'name' => (
     }
 );
 
+has 'socket' => (
+    is       => 'ro',
+    isa      => 'FCGI::Engine::Listener',
+    coerce   => 1,
+    required => 1,
+);
+
 has $_ => (
     is       => 'ro',
     isa      => 'Path::Class::File',
@@ -24,7 +31,6 @@ has $_ => (
 ) for qw[
     scriptname
     pidfile
-    socket
 ];
 
 has 'nproc' => (
@@ -71,6 +77,12 @@ sub construct_command_line {
          $self->socket, 
          "--daemon");
 }
+
+# NOTE: 
+# perhaps the server status information 
+# should also go in here, so that we can 
+# keep it all in one place.
+# - SL
 
 1;
 
