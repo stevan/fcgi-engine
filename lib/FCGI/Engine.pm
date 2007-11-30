@@ -5,7 +5,6 @@ use Moose;
 use POSIX ();
 use FCGI;
 use CGI;
-use File::Pid;
 
 use FCGI::Engine::Types;
 use FCGI::Engine::ProcManager;
@@ -15,7 +14,8 @@ use constant DEBUG => 1;
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
-with 'MooseX::Getopt';
+with 'MooseX::Getopt',
+     'MooseX::Daemonize::Core';
 
 has 'listen' => (
     metaclass   => 'Getopt',
@@ -129,7 +129,7 @@ sub run {
 
     if ($self->is_listening) {
 
-        $self->daemon_fork() if $self->detach;
+        $self->daemon_fork && return if $self->detach;
 
         # make sure any subclasses are loaded ...
         Class::MOP::load_class($self->manager);
@@ -139,7 +139,7 @@ sub run {
             pid_fname   => $self->pidfile,
         });
 
-        $self->daemon_detach() if $self->detach;
+        $self->daemon_detach if $self->detach;
         
         $proc_manager->manage();   
     }
@@ -159,23 +159,23 @@ sub run {
     }
 }
 
-sub daemon_fork {
-    fork && exit;
-}
-
-sub daemon_detach {
-    my $self = shift;
-    open STDIN,  "+</dev/null" or die $!;
-    if (DEBUG) {
-        open STDOUT, ">", "OUT.txt" or die $!;
-        open STDERR, ">", "ERR.txt" or die $!;
-    }
-    else {
-        open STDOUT, ">&STDIN" or die $!;
-        open STDERR, ">&STDIN" or die $!;        
-    }
-    POSIX::setsid();
-}
+#around 'daemon_fork' => sub {
+#    (shift)->() && exit;
+#};
+#
+#sub daemon_detach {
+#    my $self = shift;
+#    open STDIN,  "+</dev/null" or die $!;
+#    if (DEBUG) {
+#        open STDOUT, ">", "OUT.txt" or die $!;
+#        open STDERR, ">", "ERR.txt" or die $!;
+#    }
+#    else {
+#        open STDOUT, ">&STDIN" or die $!;
+#        open STDERR, ">&STDIN" or die $!;        
+#    }
+#    POSIX::setsid();
+#}
 
 1;
 

@@ -1,7 +1,7 @@
 package FCGI::Engine::Manager::Server;
 use Moose;
 
-use File::Pid;
+use MooseX::Daemonize::PidFile;
 use FCGI::Engine::Types;
 
 our $VERSION   = '0.01';
@@ -50,13 +50,10 @@ has 'additional_args' => (
 
 has 'pid_obj' => (
     is        => 'ro',
-    isa       => 'File::Pid',
+    isa       => 'MooseX::Daemonize::PidFile',
     lazy      => 1,
     default   => sub {
-        my $self = shift;
-        (-f $self->pidfile)
-            || confess "The pidfile does not exist yet, you cannot create pid object";
-        File::Pid->new({ file => $self->pidfile })
+        MooseX::Daemonize::PidFile->new(file => (shift)->pidfile)
     }
 );
 

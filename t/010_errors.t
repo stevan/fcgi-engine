@@ -51,10 +51,6 @@ push @ARGV => ('--pidfile', '/tmp/foo.pid');
     isa_ok($e, 'FCGI::Engine');
     
     ok($e->has_pidfile, '... we have a pidfile specified');
-    
-    dies_ok {
-        $e->pid_obj
-    } '... cannot get a pid object because pidfile has not been created yet';
 }
 
 
