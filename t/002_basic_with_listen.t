@@ -7,7 +7,7 @@ use Socket;
 use Test::More no_plan => 1;
 use Test::Moose;
 
-use MooseX::Daemonize::PidFile;
+use MooseX::Daemonize::Pid::File;
 
 BEGIN {
     use_ok('FCGI::Engine');
@@ -56,16 +56,16 @@ else {
     ok(-S $SOCKET, '... our socket was created');
     ok(-f $PIDFILE, '... our pidfile was created');
 
-    my $pid = MooseX::Daemonize::PidFile->new(file => $e->pidfile);
-    isa_ok($pid, 'MooseX::Daemonize::PidFile');
+    my $pid = MooseX::Daemonize::Pid::File->new(file => $e->pidfile);
+    isa_ok($pid, 'MooseX::Daemonize::Pid::File');
 
-    ok($pid->running, '... our daemon is running (pid: ' . $pid->pid . ')');
+    ok($pid->is_running, '... our daemon is running (pid: ' . $pid->pid . ')');
 
     kill TERM => $pid->pid;
     
     sleep(1); # give is a moment to die ...
 
-    ok(!$pid->running, '... our daemon is no longer running (pid: ' . $pid->pid . ')');
+    ok(!$pid->is_running, '... our daemon is no longer running (pid: ' . $pid->pid . ')');
 
     unlink $SOCKET;
 }

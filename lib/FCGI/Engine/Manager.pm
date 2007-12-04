@@ -82,7 +82,7 @@ sub start {
         
         my $pid = $server->pid_obj;
 
-        while (!$pid->running) {
+        while (!$pid->is_running) {
             $self->log("pid (" . $pid->pid . ") with pid_file (" . $server->pidfile . ") is not running yet, sleeping ...");
             sleep 2;
         }
@@ -118,7 +118,7 @@ sub stop {
             
             kill TERM => $pid->pid;
             
-            while ($pid->running) {
+            while ($pid->is_running) {
                 $self->log("pid (" . $server->pidfile . ") is still running, sleeping ...");
                 sleep 1;
             }                       

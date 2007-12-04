@@ -1,7 +1,7 @@
 package FCGI::Engine::Manager::Server;
 use Moose;
 
-use MooseX::Daemonize::PidFile;
+use MooseX::Daemonize::Pid::File;
 use FCGI::Engine::Types;
 
 our $VERSION   = '0.01';
@@ -50,10 +50,10 @@ has 'additional_args' => (
 
 has 'pid_obj' => (
     is        => 'ro',
-    isa       => 'MooseX::Daemonize::PidFile',
+    isa       => 'MooseX::Daemonize::Pid::File',
     lazy      => 1,
     default   => sub {
-        MooseX::Daemonize::PidFile->new(file => (shift)->pidfile)
+        MooseX::Daemonize::Pid::File->new(file => (shift)->pidfile)
     }
 );
 
