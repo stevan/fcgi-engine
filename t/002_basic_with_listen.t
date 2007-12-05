@@ -8,7 +8,6 @@ use Test::Moose;
 
 use Cwd;
 use File::Spec::Functions;
-use MooseX::Daemonize::Pid::File;
 
 BEGIN {
     use_ok('FCGI::Engine');
@@ -44,7 +43,8 @@ is($e->listen, $SOCKET, '... we have the right socket location');
 is($e->nproc, 1, '... we have the default 1 proc');
 
 ok($e->has_pidfile, '... we have a pidfile');
-is($e->pidfile, $PIDFILE, '... we have the right pidfile');
+isa_ok($e->pidfile, 'MooseX::Daemonize::Pid::File');
+is($e->pidfile->file, $PIDFILE, '... we have the right pidfile');
 
 ok($e->should_detach, '... we should daemonize');
 
@@ -61,7 +61,7 @@ else {
     ok(-S $SOCKET, '... our socket was created');
     ok(-f $PIDFILE, '... our pidfile was created');
 
-    my $pid = MooseX::Daemonize::Pid::File->new(file => $e->pidfile);
+    my $pid = $e->pidfile;
     isa_ok($pid, 'MooseX::Daemonize::Pid::File');
 
     ok($pid->is_running, '... our daemon is running (pid: ' . $pid->pid . ')');

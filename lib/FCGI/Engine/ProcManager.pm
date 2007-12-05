@@ -40,7 +40,7 @@ has 'n_processes' => (
 has 'pidfile' => (
     is       => 'rw',
     isa      => 'MooseX::Daemonize::Pid::File',
-    coerce   => 1,
+#    coerce   => 1,
 );
         
 has 'no_signals' => (

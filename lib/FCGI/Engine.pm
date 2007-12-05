@@ -5,6 +5,8 @@ use Moose;
 use FCGI;
 use CGI::Simple;
 
+use MooseX::Daemonize::Pid::File;
+
 use FCGI::Engine::Types;
 use FCGI::Engine::ProcManager;
 
@@ -36,7 +38,7 @@ has 'nproc' => (
 has 'pidfile' => (
     metaclass   => 'Getopt',
     is          => 'ro',
-    isa         => 'Path::Class::File',
+    isa         => 'MooseX::Daemonize::Pid::File',
     coerce      => 1,
     cmd_aliases => [qw[ pidfile p ]],
     predicate   => 'has_pidfile',
