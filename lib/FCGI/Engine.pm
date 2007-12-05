@@ -2,9 +2,8 @@
 package FCGI::Engine;
 use Moose;
 
-use POSIX ();
 use FCGI;
-use CGI;
+use CGI::Simple;
 
 use FCGI::Engine::Types;
 use FCGI::Engine::ProcManager;
@@ -61,23 +60,23 @@ has 'manager' => (
 
 # options to specify in your script
 
-has '_handler_class' => (
-    reader   => 'handler_class',
-    init_arg => 'handler_class',
-    isa      => 'ClassName',
-    required => 1,
+has 'handler_class' => (
+    metaclass => 'NoGetopt',
+    is        => 'ro',
+    isa       => 'ClassName',
+    required  => 1,
 );
 
-has '_handler_method' => (
-    reader   => 'handler_method',
-    init_arg => 'handler_method',
-    isa      => 'Str',
-    default  => sub { 'handler' },
+has 'handler_method' => (
+    metaclass => 'NoGetopt',
+    is        => 'ro',
+    isa       => 'Str',
+    default   => sub { 'handler' },
 );
 
-has '_pre_fork_init' => (
-    reader    => 'pre_fork_init',
-    init_arg  => 'pre_fork_init',
+has 'pre_fork_init' => (
+    metaclass => 'NoGetopt',
+    is        => 'ro',
     isa       => 'CodeRef',
     predicate => 'has_pre_fork_init',
 );
@@ -98,7 +97,12 @@ sub run {
     $self->pre_fork_init->() if $self->has_pre_fork_init;
 
     my $handler_class = $self->handler_class;
-    Class::MOP::load_class($handler_class);
+    # NOTE:
+    # The ClassName type requires that 
+    # the class be loaded, so this is 
+    # kind of irrelevant.
+    # - SL 
+    # Class::MOP::load_class($handler_class);
 
     ($self->handler_class->can($self->handler_method))
         || confess "The handler class ("
@@ -131,8 +135,13 @@ sub run {
 
         $self->daemon_fork && return if $self->detach;
 
-        # make sure any subclasses are loaded ...
-        Class::MOP::load_class($self->manager);
+        # NOTE:
+        # The ClassName type requires that 
+        # the class be loaded, so this is 
+        # kind of irrelevant.
+        # - SL
+        # make sure any subclasses are loaded ...        
+        # Class::MOP::load_class($self->manager);
 
         $proc_manager = $self->manager->new({
             n_processes => $self->nproc,
@@ -158,30 +167,11 @@ sub run {
             $ENV{PATH_INFO} ||= delete $ENV{SCRIPT_NAME};
         }
 
-        CGI::_reset_globals();
-        $handler_class->handler(CGI->new);
+        $handler_class->handler(CGI::Simple->new);
 
         $proc_manager && $proc_manager->post_dispatch();
     }
 }
-
-#around 'daemon_fork' => sub {
-#    (shift)->() && exit;
-#};
-#
-#sub daemon_detach {
-#    my $self = shift;
-#    open STDIN,  "+</dev/null" or die $!;
-#    if (DEBUG) {
-#        open STDOUT, ">", "OUT.txt" or die $!;
-#        open STDERR, ">", "ERR.txt" or die $!;
-#    }
-#    else {
-#        open STDOUT, ">&STDIN" or die $!;
-#        open STDERR, ">&STDIN" or die $!;        
-#    }
-#    POSIX::setsid();
-#}
 
 1;
 

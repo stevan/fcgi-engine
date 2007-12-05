@@ -2,8 +2,6 @@
 package FCGI::Engine::Manager;
 use Moose;
 
-$|++;
-
 use FCGI::Engine::Types;
 use FCGI::Engine::Manager::Server;
 
@@ -59,6 +57,8 @@ sub log { shift; print @_, "\n" }
 sub start {
     my $self = shift;
     
+    local $| = 1;
+    
     $self->log("Starting up the FCGI servers ...");
 
     foreach my $server (@{$self->servers}) {
@@ -107,6 +107,8 @@ sub status {
 
 sub stop {
     my $self = shift;
+    
+    local $| = 1;    
         
     $self->log("Killing the FCGI servers ...");
 
@@ -161,7 +163,7 @@ Stevan Little E<lt>stevan@iinteractive.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2006, 2007 by Infinity Interactive, Inc.
+Copyright 2007 by Infinity Interactive, Inc.
 
 L<http://www.iinteractive.com>
 

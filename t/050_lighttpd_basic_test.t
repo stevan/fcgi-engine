@@ -2,20 +2,24 @@
 
 use strict;
 use warnings;
-use Socket;
 
-use Test::More no_plan => 1;
+use Test::More;
 use Test::WWW::Mechanize;
 use Test::Moose;
 
-use MooseX::Daemonize::Pid::File;
+use t::lib::utils;
 
+my $lighttpd;
 BEGIN {
-    use_ok('FCGI::Engine');
+    $lighttpd = utils::find_lighttpd();
+    plan skip_all => "A lighttpd binary must be available for this test" unless $lighttpd;     
+    plan no_plan => 1;
+    use_ok('FCGI::Engine');    
 }
 
 use Cwd;
 use File::Spec::Functions;
+use MooseX::Daemonize::Pid::File;
 
 my $CWD                = Cwd::cwd;
 $ENV{MX_DAEMON_STDOUT} = catfile($CWD, 'Out.txt');
@@ -74,15 +78,15 @@ else {
 
     ok($pid->is_running, '... our daemon is running (pid: ' . $pid->pid . ')');
     
-    system(qw[lighttpd -f t/lighttpd_confs/050_lighttpd_basic_test.conf]);
+    utils::start_lighttpd('t/lighttpd_confs/050_lighttpd_basic_test.conf');
 
     my $mech = Test::WWW::Mechanize->new;
     for (1 .. 5) {
         $mech->get_ok('http://localhost:8080/count', '... got the page okay');
-        $mech->content_is($_, '... got the content we expected');    
+        $mech->content_is($_, '... got the content we expected');   
     }
 
-    kill TERM => `cat /tmp/lighttpd.pid`;
+    utils::stop_lighttpd();
 
     kill TERM => $pid->pid;
     

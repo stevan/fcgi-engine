@@ -2,19 +2,17 @@
 
 use strict;
 use warnings;
-use Socket;
 
 use Test::More no_plan => 1;
 use Test::Moose;
 
+use Cwd;
+use File::Spec::Functions;
 use MooseX::Daemonize::Pid::File;
 
 BEGIN {
     use_ok('FCGI::Engine');
 }
-
-use Cwd;
-use File::Spec::Functions;
 
 my $CWD                = Cwd::cwd;
 $ENV{MX_DAEMON_STDOUT} = catfile($CWD, 'Out.txt');
@@ -27,8 +25,8 @@ $ENV{MX_DAEMON_STDERR} = catfile($CWD, 'Err.txt');
     }
 }
 
-my $SOCKET  = '/tmp/fcgi_engine_test_application.socket';
-my $PIDFILE = '/tmp/fcgi_engine_test_application.pid';
+my $SOCKET  = '/tmp/002_basic_with_listen.socket';
+my $PIDFILE = '/tmp/002_basic_with_listen.pid';
 
 @ARGV = (
     '--listen'  => $SOCKET,

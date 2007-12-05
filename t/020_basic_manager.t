@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use FindBin;
+use Cwd;
 use File::Spec::Functions;
 
 use Test::More no_plan => 1;
@@ -12,9 +13,6 @@ use Test::Moose;
 BEGIN {
     use_ok('FCGI::Engine::Manager');
 }
-
-use Cwd;
-use File::Spec::Functions;
 
 my $CWD                = Cwd::cwd;
 $ENV{MX_DAEMON_STDOUT} = catfile($CWD, 'Out.txt');
