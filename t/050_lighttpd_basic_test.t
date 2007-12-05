@@ -5,6 +5,7 @@ use warnings;
 use Socket;
 
 use Test::More no_plan => 1;
+use Test::WWW::Mechanize;
 use Test::Moose;
 
 use MooseX::Daemonize::Pid::File;
@@ -21,14 +22,19 @@ $ENV{MX_DAEMON_STDOUT} = catfile($CWD, 'Out.txt');
 $ENV{MX_DAEMON_STDERR} = catfile($CWD, 'Err.txt');
 
 {
-    package Foo;
+    package Counter;
+    use Moose;
+    
+    my $count = 0;
+    
     sub handler { 
-        "Foo::handler was called (but no one will ever see this)";
+        print("Content-type: text/html\r\n\r\n");
+        print(++$count);
     }
 }
 
-my $SOCKET  = '/tmp/fcgi_engine_test_application.socket';
-my $PIDFILE = '/tmp/fcgi_engine_test_application.pid';
+my $SOCKET  = '/tmp/050_lighttpd_basic_test.socket';
+my $PIDFILE = '/tmp/050_lighttpd_basic_test.pid';
 
 @ARGV = (
     '--listen'  => $SOCKET,
@@ -36,7 +42,7 @@ my $PIDFILE = '/tmp/fcgi_engine_test_application.pid';
     '--daemon'
 );
 
-my $e = FCGI::Engine->new_with_options(handler_class => 'Foo');
+my $e = FCGI::Engine->new_with_options(handler_class => 'Counter');
 isa_ok($e, 'FCGI::Engine');
 does_ok($e, 'MooseX::Getopt');
 
@@ -67,6 +73,16 @@ else {
     isa_ok($pid, 'MooseX::Daemonize::Pid::File');
 
     ok($pid->is_running, '... our daemon is running (pid: ' . $pid->pid . ')');
+    
+    system(qw[lighttpd -f t/lighttpd_confs/050_lighttpd_basic_test.conf]);
+
+    my $mech = Test::WWW::Mechanize->new;
+    for (1 .. 5) {
+        $mech->get_ok('http://localhost:8080/count', '... got the page okay');
+        $mech->content_is($_, '... got the content we expected');    
+    }
+
+    kill TERM => `cat /tmp/lighttpd.pid`;
 
     kill TERM => $pid->pid;
     
@@ -79,4 +95,3 @@ else {
 
 #unlink $ENV{MX_DAEMON_STDOUT};
 #unlink $ENV{MX_DAEMON_STDERR};
-

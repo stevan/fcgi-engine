@@ -13,6 +13,14 @@ BEGIN {
     use_ok('FCGI::Engine::Manager');
 }
 
+use Cwd;
+use File::Spec::Functions;
+
+my $CWD                = Cwd::cwd;
+$ENV{MX_DAEMON_STDOUT} = catfile($CWD, 'Out.txt');
+$ENV{MX_DAEMON_STDERR} = catfile($CWD, 'Err.txt');
+
+
 my $m = FCGI::Engine::Manager->new(
     conf => catfile($FindBin::Bin, 'confs', 'test_conf.yml')
 );
@@ -28,3 +36,7 @@ diag $m->status;
 lives_ok {
     $m->stop;
 } '... started okay';
+
+#unlink $ENV{MX_DAEMON_STDOUT};
+#unlink $ENV{MX_DAEMON_STDERR};
+

@@ -66,6 +66,7 @@ has 'server_pids' => (
     metaclass => 'Collection::Bag',
     is        => 'rw',
     clearer   => 'forget_all_pids',      
+    default   => sub { +{} },
     provides  => {
         'add'    => 'add_pid',
         'keys'   => 'get_all_pids',
@@ -106,8 +107,8 @@ sub BUILD {
     sub setup_signal_handler {
         my $self = shift;
         $SIG_CODEREF = $self->role eq 'manager'
-            ? sub { $self->manager_sig_handler(@_) } 
-            : sub { $self->server_sig_handler(@_)  };    
+            ? sub { defined $self && $self->manager_sig_handler(@_) } 
+            : sub { defined $self && $self->server_sig_handler(@_)  };    
     }
 }
 
@@ -117,11 +118,11 @@ sub manage {
     my $self = shift;
 
     # skip to handling now if we won't be managing any processes.
-    $self->n_processes() or return;
+    $self->n_processes or return;
 
     # call the (possibly overloaded) management initialization hook.
     $self->role("manager");
-    $self->manager_init();
+    $self->manager_init;
     $self->notify("initialized");
 
     my $manager_pid = $$;
@@ -136,13 +137,13 @@ sub manage {
         #getppid() == 1 and
         #  return $self->die("calling process has died");
         
-        $self->n_processes() > 0 or
-            return $self->die();
+        $self->n_processes > 0 or
+            return $self->die;
         
         # while we have fewer servers than we want.
-        PIDS: while ($self->pid_count < $self->n_processes()) {
+        PIDS: while ($self->pid_count < $self->n_processes) {
             
-            if (my $pid = fork()) {
+            if (my $pid = fork) {
                 # the manager remembers the server.
                 $self->add_pid($pid);
                 $self->notify("server (pid $pid) started");
@@ -150,7 +151,6 @@ sub manage {
              } 
              elsif (! defined $pid) {
                  return $self->abort("fork: $!");
-            
              } 
              else {
                  $self->manager_pid($manager_pid);
@@ -158,11 +158,11 @@ sub manage {
                  last MANAGING_LOOP;
              }
             
-             for (my $s = $self->start_delay(); $s; $s = sleep $s) {};
+             for (my $s = $self->start_delay; $s; $s = sleep $s) {};
         }
         
         # this should block until the next server dies.
-        $self->wait();
+        $self->wait;
         
     }# while 1
 
@@ -173,7 +173,7 @@ sub manage {
 
     # call the (possibly overloaded) handling init hook
     $self->role("server");
-    $self->server_init();
+    $self->server_init;
     $self->notify("initialized");
 
     # server returns 
@@ -185,14 +185,14 @@ sub manage {
 sub manager_init {
     my $self = shift;
     
-    unless ($self->no_signals()) {
+    unless ($self->no_signals) {
         $self->setup_signal_actions(should_restart => 0);
         $self->setup_signal_handler;
     }
     
     $self->change_process_name("perl-fcgi-pm");
     
-    $self->write_pid_file();
+    $self->write_pid_file;
     
     inner();
 }
@@ -200,7 +200,7 @@ sub manager_init {
 sub server_init {
     my $self = shift;
     
-    unless ($self->no_signals()) {
+    unless ($self->no_signals) {
         $self->setup_signal_actions(should_restart => 0);
         $self->setup_signal_handler;
     }
@@ -217,7 +217,7 @@ sub pre_dispatch {
     my $self = shift;
     
     $self->setup_signal_actions(should_restart => 1)
-        unless $self->no_signals();        
+        unless $self->no_signals;        
     
     inner();
 }
@@ -236,7 +236,7 @@ sub post_dispatch {
     }
     
     $self->setup_signal_actions(should_restart => 0)
-        unless $self->no_signals();
+        unless $self->no_signals;
     
     inner();
 }
@@ -351,12 +351,12 @@ sub die : method {
     $SIG{HUP}  = 'DEFAULT';
     $SIG{TERM} = 'DEFAULT';
     
-    $self->remove_pid_file();
+    $self->remove_pid_file;
     
     # prepare to die no matter what.
-    if (defined $self->die_timeout()) {
+    if (defined $self->die_timeout) {
         $SIG{ALRM} = sub { $self->abort("wait timeout") };
-        alarm $self->die_timeout();
+        alarm $self->die_timeout;
     }
     
     # send a TERM to each of the servers.
@@ -367,7 +367,7 @@ sub die : method {
     
     # wait for the servers to die.
     while ($self->has_pids) {
-        $self->wait();
+        $self->wait;
     }
     
     # die already.
@@ -399,7 +399,6 @@ sub exit : method {
 __END__
 
 =pod
-
 
 =head1 NAME
 

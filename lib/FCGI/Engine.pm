@@ -139,12 +139,18 @@ sub run {
             pid_fname   => $self->pidfile,
         });
 
-        $self->daemon_detach if $self->detach;
+        $self->daemon_detach(
+            # Not sure we need this ...
+            no_double_fork       => 1,
+            # we definetely need this ...
+            dont_close_all_files => 1,
+        ) if $self->detach;
         
         $proc_manager->manage();   
     }
 
-    while($request->Accept() >= 0) {
+    while ($request->Accept() >= 0) {
+        
         $proc_manager && $proc_manager->pre_dispatch();
 
         # Cargo-culted from Catalyst::Engine::FastCGI ...

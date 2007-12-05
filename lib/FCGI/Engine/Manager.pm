@@ -116,6 +116,7 @@ sub stop {
             
             my $pid = $server->pid_obj;
             
+            $self->log("Killing PID " . $pid->pid . " from $$ ");
             kill TERM => $pid->pid;
             
             while ($pid->is_running) {
