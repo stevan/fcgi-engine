@@ -145,7 +145,7 @@ sub run {
 
         $proc_manager = $self->manager->new({
             n_processes => $self->nproc,
-            pid_fname   => $self->pidfile,
+            pidfile     => $self->pidfile,
         });
 
         $self->daemon_detach(

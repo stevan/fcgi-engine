@@ -8,6 +8,7 @@ use constant DEBUG => 1;
 use POSIX qw(SA_RESTART SIGTERM SIGHUP);
 
 use FCGI::Engine::Types;
+use MooseX::Daemonize::Pid::File;
 
 our $VERSION   = '0.01'; 
 our $AUTHORITY = 'cpan:STEVAN';
@@ -36,9 +37,9 @@ has 'n_processes' => (
     default  => sub { 0 }
 ); 
 
-has 'pid_fname' => (
+has 'pidfile' => (
     is       => 'rw',
-    isa      => 'Path::Class::File',
+    isa      => 'MooseX::Daemonize::Pid::File',
     coerce   => 1,
 );
         
@@ -192,7 +193,8 @@ sub manager_init {
     
     $self->change_process_name("perl-fcgi-pm");
     
-    $self->write_pid_file;
+    eval { $self->pidfile->write };
+    $self->notify("Could not write the PID file because: $@") if $@;
     
     inner();
 }
@@ -242,28 +244,6 @@ sub post_dispatch {
 }
 
 ## utils ...
-
-## pid file ...
-
-sub write_pid_file {
-    my $self  = shift;
-    my $fname = $self->pid_fname || return;
-    
-    if (!open PIDFILE, ">", "$fname") {
-        $self->notify("open: $fname: $!");
-        return;
-    }
-    
-    print PIDFILE "$$\n";
-    close PIDFILE;
-}
-
-sub remove_pid_file {
-    my $self  = shift;
-    my $fname = $self->pid_fname || return;
-    my $ret   = unlink($fname)   || $self->notify("unlink: $fname: $!");
-    return $ret;
-}
 
 # sig-handlers
 
@@ -351,7 +331,8 @@ sub die : method {
     $SIG{HUP}  = 'DEFAULT';
     $SIG{TERM} = 'DEFAULT';
     
-    $self->remove_pid_file;
+    $self->pidfile->remove 
+        || $self->notify("Could not remove PID file: $!");
     
     # prepare to die no matter what.
     if (defined $self->die_timeout) {
