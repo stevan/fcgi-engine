@@ -29,12 +29,12 @@ lives_ok {
     $m->start;
 } '... started okay';
 
-diag $m->status;
+#diag $m->status;
 
 lives_ok {
     $m->stop;
 } '... started okay';
 
-#unlink $ENV{MX_DAEMON_STDOUT};
-#unlink $ENV{MX_DAEMON_STDERR};
+unlink $ENV{MX_DAEMON_STDOUT};
+unlink $ENV{MX_DAEMON_STDERR};
 

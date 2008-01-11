@@ -26,9 +26,9 @@ __END__
 
 FCGI::Engine::Manager::Server::FreeBSD6
 
-=head1 SYNOPSIS
-
 =head1 DESCRIPTION
+
+This may not even be needed anymore, but at one time it was. 
 
 =head1 BUGS
 
@@ -42,7 +42,7 @@ Stevan Little E<lt>stevan@iinteractive.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2006, 2007 by Infinity Interactive, Inc.
+Copyright 2007-2008 by Infinity Interactive, Inc.
 
 L<http://www.iinteractive.com>
 

@@ -370,13 +370,6 @@ Call this to start the show.
 This is the L<Moose> BUILD method, it checks some of 
 our parameters to be sure all is sane.
 
-=item B<daemon_fork>
-
-=item B<daemon_detach>
-
-These two methods were stolen verbatim from L<Catalyst::Engine::FastCGI>
-if they are wrong, blame them (and send a patch to both of us).
-
 =item B<meta>
 
 This returns the L<Moose> metaclass assocaited with 
@@ -384,7 +377,7 @@ this class.
 
 =back
 
-=head SEE ALSO
+=head1 SEE ALSO
 
 =over 4
 
@@ -411,7 +404,7 @@ Stevan Little E<lt>stevan@iinteractive.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2007 by Infinity Interactive, Inc.
+Copyright 2007-2008 by Infinity Interactive, Inc.
 
 L<http://www.iinteractive.com>
 

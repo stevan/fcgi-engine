@@ -89,11 +89,11 @@ __END__
 
 =head1 NAME
 
-FCGI::Engine::Manager::Server
-
-=head1 SYNOPSIS
+FCGI::Engine::Manager::Server - An abstraction to represent a single FCGI::Engine server
 
 =head1 DESCRIPTION
+
+Nothing here to see really.
 
 =head1 BUGS
 
@@ -107,7 +107,7 @@ Stevan Little E<lt>stevan@iinteractive.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2006, 2007 by Infinity Interactive, Inc.
+Copyright 2007-2008 by Infinity Interactive, Inc.
 
 L<http://www.iinteractive.com>
 

@@ -145,21 +145,21 @@ sub manage {
         PIDS: while ($self->pid_count < $self->n_processes) {
             
             if (my $pid = fork) {
-                # the manager remembers the server.
-                $self->add_pid($pid);
-                $self->notify("server (pid $pid) started");
+               # the manager remembers the server.
+               $self->add_pid($pid);
+               $self->notify("server (pid $pid) started");
             
-             } 
-             elsif (! defined $pid) {
-                 return $self->abort("fork: $!");
-             } 
-             else {
-                 $self->manager_pid($manager_pid);
-                 # the server exits the managing loop.
-                 last MANAGING_LOOP;
-             }
+            } 
+            elsif (! defined $pid) {
+                return $self->abort("fork: $!");
+            } 
+            else {
+                $self->manager_pid($manager_pid);
+                # the server exits the managing loop.
+                last MANAGING_LOOP;
+            }
             
-             for (my $s = $self->start_delay; $s; $s = sleep $s) {};
+            for (my $s = $self->start_delay; $s; $s = sleep $s) {};
         }
         
         # this should block until the next server dies.
@@ -187,7 +187,7 @@ sub manager_init {
     my $self = shift;
     
     unless ($self->no_signals) {
-        $self->setup_signal_actions(should_restart => 0);
+        $self->setup_signal_actions(with_sa_restart => 0);
         $self->setup_signal_handler;
     }
     
@@ -203,7 +203,7 @@ sub server_init {
     my $self = shift;
     
     unless ($self->no_signals) {
-        $self->setup_signal_actions(should_restart => 0);
+        $self->setup_signal_actions(with_sa_restart => 0);
         $self->setup_signal_handler;
     }
     
@@ -218,7 +218,7 @@ sub server_init {
 sub pre_dispatch {
     my $self = shift;
     
-    $self->setup_signal_actions(should_restart => 1)
+    $self->setup_signal_actions(with_sa_restart => 1)
         unless $self->no_signals;        
     
     inner();
@@ -237,7 +237,7 @@ sub post_dispatch {
         $self->exit("safe exit: manager has died");
     }
     
-    $self->setup_signal_actions(should_restart => 0)
+    $self->setup_signal_actions(with_sa_restart => 0)
         unless $self->no_signals;
     
     inner();
@@ -299,11 +299,11 @@ sub wait : method {
 ## signal handling stuff ...
 
 sub setup_signal_actions {
-    my ($self, $should_restart) = validatep(\@_, 
-        should_restart => { isa => 'Bool' }
+    my ($self, $with_sa_restart) = validatep(\@_, 
+        with_sa_restart => { isa => 'Bool' }
     );
 
-    my $sig_action = $should_restart 
+    my $sig_action = $with_sa_restart 
         ? $self->sigaction_sa_restart
         : $self->sigaction_no_sa_restart;
         
@@ -383,34 +383,19 @@ __END__
 
 =head1 NAME
 
- FCGI::Engine::ProcManager - module for managing FastCGI applications.
-
-=head1 SYNOPSIS
+FCGI::Engine::ProcManager - module for managing FastCGI applications.
 
 =head1 DESCRIPTION
 
-FCGI::Engine::ProcManager is used to serve as a FastCGI process manager.  By
-re-implementing it in perl, developers can more finely tune performance in
-their web applications, and can take advantage of copy-on-write semantics
-prevalent in UNIX kernel process management.  The process manager should
-be invoked before the caller''s request loop
-
-The primary routine, C<manage>, enters a loop in which it maintains a
-number of FastCGI servers (via fork(2)), and which reaps those servers
-when they die (via wait(2)).
-
-C<manage> provides too hooks:
-
- C<manager_init> - called just before the manager enters the manager loop.
- C<server_init> - called just before a server is returns from C<manage>
-
-It is necessary for the caller, when implementing its request loop, to
-insert a call to C<pre_dispatch> at the top of the loop, and then
-7C<post_dispatch> at the end of the loop.
+This module is a refactoring of FCGI::ProcManager, it behaves exactly the 
+same, but the API is different. The function-oriented API has been removed
+in favor of object-oriented API. The C<pm_> prefix has been removed from 
+the hook routines and instead they now use the C<augment> and C<inner> 
+functionality from L<Moose>. 
 
 =head2 Signal Handling
 
-FCGI::Engine::ProcManager attempts to do the right thing for proper shutdowns now.
+FCGI::Engine::ProcManager attempts to do the right thing for proper shutdowns.
 
 When it receives a SIGHUP, it sends a SIGTERM to each of its children, and
 then resumes its normal operations.   
@@ -422,34 +407,10 @@ return status 0.  If all children do not die by the time the "die timeout"
 occurs, the process manager sends a SIGKILL to each of the remaining
 children, and exists with return status 1.
 
-In order to get FastCGI servers to exit upon receiving a signal, it is
-necessary to use its FAIL_ACCEPT_ON_INTR.  See FCGI.pm's description of
-FAIL_ACCEPT_ON_INTR.  Unfortunately, if you want/need to use CGI::Fast, it
-appears currently necessary to modify your installation of FCGI.pm, with
-something like the following:
-
- -*- patch -*-
- --- FCGI.pm     2001/03/09 01:44:00     1.1.1.3
- +++ FCGI.pm     2001/03/09 01:47:32     1.2
- @@ -24,7 +24,7 @@
-  *FAIL_ACCEPT_ON_INTR = sub() { 1 };
-  
-  sub Request(;***$$$) {
- -    my @defaults = (\*STDIN, \*STDOUT, \*STDERR, \%ENV, 0, 0);
- +    my @defaults = (\*STDIN, \*STDOUT, \*STDERR, \%ENV, 0, FAIL_ACCEPT_ON_INTR());
-      splice @defaults,0,@_,@_;
-      RequestX(@defaults);
-  }   
- -*- end patch -*-
-
-Otherwise, if you don't, there is a loop around accept(2) which prevents
-os_unix.c OS_Accept() from returning the necessary error when FastCGI
-servers blocking on accept(2) receive the SIGTERM or SIGHUP.
-
-FCGI::Engine::ProcManager uses POSIX::sigaction() to override the default SA_RESTART
-policy used for perl's %SIG behavior.  Specifically, the process manager
-never uses SA_RESTART, while the child FastCGI servers turn off SA_RESTART
-around the accept(2) loop, but re-enstate it otherwise.
+FCGI::Engine::ProcManager uses POSIX::sigaction() to override the default 
+SA_RESTART policy used for perl's %SIG behavior.  Specifically, the process 
+manager never uses SA_RESTART, while the child FastCGI servers turn off 
+SA_RESTART around the accept loop, but re-enstate it otherwise.
 
 The desired (and implemented) effect is to give a request as big a chance as
 possible to succeed and to delay their exits until after their request,
@@ -458,7 +419,10 @@ away.
 
 =head1 METHODS
 
-=head SEE ALSO
+I will fill this in more eventually, but for now if you really wanna know, 
+read the source.
+
+=head1 SEE ALSO
 
 =over 4
 
@@ -481,7 +445,7 @@ Stevan Little E<lt>stevan@iinteractive.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2007 by Infinity Interactive, Inc.
+Copyright 2007-2008 by Infinity Interactive, Inc.
 
 L<http://www.iinteractive.com>
 

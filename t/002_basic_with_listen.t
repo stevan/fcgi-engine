@@ -75,6 +75,6 @@ else {
     unlink $SOCKET;
 }
 
-#unlink $ENV{MX_DAEMON_STDOUT};
-#unlink $ENV{MX_DAEMON_STDERR};
+unlink $ENV{MX_DAEMON_STDOUT};
+unlink $ENV{MX_DAEMON_STDERR};
 

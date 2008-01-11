@@ -145,11 +145,25 @@ __END__
 
 =head1 NAME
 
-FCGI::Engine::Manager
+FCGI::Engine::Manager - Manage multiple FCGI::Engine instances
 
 =head1 SYNOPSIS
 
+  my $m = FCGI::Engine::Manager->new(
+      conf => 'conf/my_app_conf.yml'
+  );
+  
+  $m->start  if $ARGV[0] eq 'start';
+  $m->status if $ARGV[0] eq 'status';
+  $m->stop   if $ARGV[0] eq 'stop';    
+
 =head1 DESCRIPTION
+
+This module handles multiple FCGI::Engine instances for you, it can 
+start, stop and provide basic status info. It is configurable using 
+L<Config::Any>, but only really the YAML format has been tested. 
+
+This module is still in it's early stages, many things may chance.
 
 =head1 BUGS
 
@@ -163,7 +177,7 @@ Stevan Little E<lt>stevan@iinteractive.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2007 by Infinity Interactive, Inc.
+Copyright 2007-2008 by Infinity Interactive, Inc.
 
 L<http://www.iinteractive.com>
 
