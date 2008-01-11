@@ -5,7 +5,7 @@ use inc::Module::Install;
 die "This module is not for Window, sorry."
     if  $^O eq 'Win32' or $^O eq 'cygwin';
 
-name 'FCGI::Engine';
+name 'FCGI-Engine';
 all_from 'lib/FCGI/Engine.pm';
 license 'perl';
 
