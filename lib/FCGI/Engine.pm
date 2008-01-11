@@ -56,7 +56,7 @@ has 'detach' => (
 has 'manager' => (
     metaclass   => 'Getopt',
     is          => 'ro',
-    isa         => 'ClassName',
+    isa         => 'Str',
     default     => sub { 'FCGI::Engine::ProcManager' },
     cmd_aliases => 'M',
 );
@@ -66,7 +66,7 @@ has 'manager' => (
 has 'handler_class' => (
     metaclass => 'NoGetopt',
     is        => 'ro',
-    isa       => 'ClassName',
+    isa       => 'Str',
     required  => 1,
 );
 
@@ -100,12 +100,7 @@ sub run {
     $self->pre_fork_init->() if $self->has_pre_fork_init;
 
     my $handler_class = $self->handler_class;
-    # NOTE:
-    # The ClassName type requires that 
-    # the class be loaded, so this is 
-    # kind of irrelevant.
-    # - SL 
-    # Class::MOP::load_class($handler_class);
+    Class::MOP::load_class($handler_class);
 
     ($self->handler_class->can($self->handler_method))
         || confess "The handler class ("
@@ -138,13 +133,8 @@ sub run {
 
         $self->daemon_fork && return if $self->detach;
 
-        # NOTE:
-        # The ClassName type requires that 
-        # the class be loaded, so this is 
-        # kind of irrelevant.
-        # - SL
         # make sure any subclasses are loaded ...        
-        # Class::MOP::load_class($self->manager);
+        Class::MOP::load_class($self->manager);
 
         $proc_manager = $self->manager->new({
             n_processes => $self->nproc,
