@@ -2,12 +2,12 @@ use strict;
 use warnings;
 use inc::Module::Install;
 
+die "This module is not for Window, sorry."
+    if  $^O eq 'Win32' or $^O eq 'cygwin';
+
 name 'FCGI::Engine';
 all_from 'lib/FCGI/Engine.pm';
 license 'perl';
-
-( $^O eq 'Win32' or $^O eq 'cygwin' )
-    || die "This module is not for Window, sorry.";
 
 # prereqs
 requires 'Moose'                    => 0.32;
