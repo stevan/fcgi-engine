@@ -49,7 +49,8 @@ FCGI::Engine::Types - Type constraints for FCGI::Engine
 
 =head1 DESCRIPTION
 
-This is all the types needed by the FCGI::Engine modules.
+This is all the type constraints needed by the FCGI::Engine modules, 
+no user serviceable parts inside (unless you are subclassing stuff).
 
 =head1 BUGS
 

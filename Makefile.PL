@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use inc::Module::Install;
 
-die "This module is not for Window, sorry."
+die "This module is not for use on Windows, sorry."
     if  $^O eq 'Win32' or $^O eq 'cygwin';
 
 name 'FCGI-Engine';

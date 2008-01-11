@@ -24,11 +24,17 @@ __END__
 
 =head1 NAME
 
-FCGI::Engine::Manager::Server::FreeBSD6
+FCGI::Engine::Manager::Server::FreeBSD6 - A subclass of FCGI::Engine::Manager::Server specific to FreeBSD 6.*
 
 =head1 DESCRIPTION
 
-This may not even be needed anymore, but at one time it was. 
+This may not even be needed anymore, but at one time it was. This works 
+around the fact that L<FCGI::ProcManager> didn't like to be dameonized
+on FreeBSD 6.*. I suspect that now that I have switched this to use 
+L<FCGI::Engine::ProcManager> that it is no longer an issue. But at this 
+point I have not have the opportunity to test this theory, so I am 
+leaving this here for historical purposes and as an example of subclassing
+L<FCGI::Engine::Manager::Server>.
 
 =head1 BUGS
 

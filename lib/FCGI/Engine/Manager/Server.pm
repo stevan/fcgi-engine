@@ -93,7 +93,9 @@ FCGI::Engine::Manager::Server - An abstraction to represent a single FCGI::Engin
 
 =head1 DESCRIPTION
 
-Nothing here to see really.
+Nothing here to see really, this just models the individual server 
+information in the config file for FCGI::Engine::Manager. It also 
+handles creating the command line as well. 
 
 =head1 BUGS
 

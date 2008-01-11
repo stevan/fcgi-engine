@@ -3,7 +3,7 @@ use Moose;
 use MooseX::Params::Validate;
 use MooseX::AttributeHelpers;
 
-use constant DEBUG => 1;
+use constant DEBUG => 0;
 
 use POSIX qw(SA_RESTART SIGTERM SIGHUP);
 
@@ -387,11 +387,11 @@ FCGI::Engine::ProcManager - module for managing FastCGI applications.
 
 =head1 DESCRIPTION
 
-This module is a refactoring of FCGI::ProcManager, it behaves exactly the 
-same, but the API is different. The function-oriented API has been removed
-in favor of object-oriented API. The C<pm_> prefix has been removed from 
-the hook routines and instead they now use the C<augment> and C<inner> 
-functionality from L<Moose>. 
+This module is a refactoring of L<FCGI::ProcManager>, it behaves exactly the 
+same, but the API is a little different. The function-oriented API has been 
+removed in favor of object-oriented API. The C<pm_> prefix has been removed 
+from  the hook routines and instead they now use the C<augment> and C<inner> 
+functionality from L<Moose>. More docs will come eventually. 
 
 =head2 Signal Handling
 

@@ -163,7 +163,7 @@ This module handles multiple FCGI::Engine instances for you, it can
 start, stop and provide basic status info. It is configurable using 
 L<Config::Any>, but only really the YAML format has been tested. 
 
-This module is still in it's early stages, many things may chance.
+This module is still in it's early stages, many things may change.
 
 =head1 BUGS
 

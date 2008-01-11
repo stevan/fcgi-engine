@@ -10,7 +10,7 @@ use MooseX::Daemonize::Pid::File;
 use FCGI::Engine::Types;
 use FCGI::Engine::ProcManager;
 
-use constant DEBUG => 1;
+use constant DEBUG => 0;
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
@@ -199,6 +199,18 @@ FCGI::Engine - A flexible engine for running FCGI-based applications
   perl scripts/my_web_app_fcgi.pl --nproc 10 --pidfile /tmp/my_app.pid \
                                   --listen /tmp/my_app.socket --daemon
 
+=head1 IMPORTANT NOTE
+
+This is an early release of this module, it is intended to fill the 
+need for a better set of FastCGI tools. At this point it still lacks
+good documentation and a few of the bits still need some work. However
+it is reasonably stable and I am using it actively at $work. If you have
+any questions about this module feel free to contact me. 
+
+The API for L<FCGI::Engine> is probably the only one which will not change 
+(since is really just emulates the L<Catalyst::Engine::FCGI> API), all 
+other modules in this distro are subject to change at this point.
+
 =head1 DESCRIPTION
 
 This module helps manage FCGI based web applications by providing a 
@@ -379,7 +391,10 @@ stuffed them in here.
 
 =item L<MooseX::Getopt>
 
-=item L<FCGI::Engine::ProcManager>
+=item L<FCGI::ProcManager>
+
+I refactored this module and renamed it L<FCGI::Engine::ProcManager>, 
+which is now included in this distro.
 
 =back
 
