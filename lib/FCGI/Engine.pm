@@ -23,7 +23,7 @@ has 'listen' => (
     is          => 'ro',
     isa         => 'FCGI::Engine::Listener',
     coerce      => 1,
-    cmd_aliases => [qw[ listen l ]],
+    cmd_aliases => 'l',
     predicate   => 'is_listening',
 );
 
@@ -32,7 +32,7 @@ has 'nproc' => (
     is          => 'ro',
     isa         => 'Int',
     default     => sub { 1 },
-    cmd_aliases => [qw[ nproc n ]],
+    cmd_aliases => 'n',
 );
 
 has 'pidfile' => (
@@ -40,7 +40,7 @@ has 'pidfile' => (
     is          => 'ro',
     isa         => 'MooseX::Daemonize::Pid::File',
     coerce      => 1,
-    cmd_aliases => [qw[ pidfile p ]],
+    cmd_aliases => 'p',
     predicate   => 'has_pidfile',
 );
 
@@ -48,7 +48,8 @@ has 'detach' => (
     metaclass   => 'Getopt',
     is          => 'ro',
     isa         => 'Bool',
-    cmd_aliases => [qw[ daemon d ]],
+    cmd_flag    => 'daemon',
+    cmd_aliases => 'd',
     predicate   => 'should_detach',
 );
 
@@ -57,7 +58,7 @@ has 'manager' => (
     is          => 'ro',
     isa         => 'ClassName',
     default     => sub { 'FCGI::Engine::ProcManager' },
-    cmd_aliases => [qw[ manager M ]],
+    cmd_aliases => 'M',
 );
 
 # options to specify in your script
