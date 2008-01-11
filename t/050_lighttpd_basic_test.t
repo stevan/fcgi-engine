@@ -82,7 +82,7 @@ else {
 
     my $mech = Test::WWW::Mechanize->new;
     for (1 .. 5) {
-        $mech->get_ok('http://localhost:8080/count', '... got the page okay');
+        $mech->get_ok('http://localhost:3333/count', '... got the page okay');
         $mech->content_is($_, '... got the content we expected');   
     }
 
