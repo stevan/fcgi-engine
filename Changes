@@ -1,4 +1,7 @@
 Revision history for Perl extension FCGI-Engine
 
-0.01
+0.02 Fri. Jan. 11, 2008
+    - fixing dependency issues 
+
+0.01 Fri. Jan. 11, 2008
     - hello world
