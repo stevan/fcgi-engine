@@ -1,5 +1,21 @@
 Revision history for Perl extension FCGI-Engine
 
+0.03
+    * FCGI::Engine
+      - handler_method was not being used properly 
+        to dispatch with (reported by Reed A. Cartwright)
+        - added tests for this
+       
+      - %additional_options can now be passed to run, which 
+        will then be passed to both the pre_fork_init sub and 
+        the proc_manager's constructor
+        - added tests for this
+    
+    * FCGI::Engine::ProcManager
+      - added the manager_process_name and the process_name
+        options to allow custom process naming
+        - added test for this
+
 0.02 Fri. Jan. 11, 2008
     - fixing dependency issues 
 

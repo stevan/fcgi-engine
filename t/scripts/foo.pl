@@ -10,4 +10,7 @@ use FCGI::Engine;
     sub handler { () }
 }
 
-FCGI::Engine->new_with_options(handler_class => 'Foo')->run;
+FCGI::Engine->new_with_options(handler_class => 'Foo')->run(
+    process_name         => 'minion',
+    manager_process_name => 'overseer',    
+);

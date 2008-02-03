@@ -10,7 +10,7 @@ use POSIX qw(SA_RESTART SIGTERM SIGHUP);
 use FCGI::Engine::Types;
 use MooseX::Daemonize::Pid::File;
 
-our $VERSION   = '0.01'; 
+our $VERSION   = '0.02'; 
 our $AUTHORITY = 'cpan:STEVAN';
 
 has 'role' => (
@@ -76,6 +76,9 @@ has 'server_pids' => (
         'count'  => 'pid_count',
     }
 );
+
+has 'process_name'         => (is => 'ro', isa => 'Str', default => sub { 'perl-fcgi'    });
+has 'manager_process_name' => (is => 'ro', isa => 'Str', default => sub { 'perl-fcgi-pm' });
 
 ## methods ...
 
@@ -191,7 +194,7 @@ sub manager_init {
         $self->setup_signal_handler;
     }
     
-    $self->change_process_name("perl-fcgi-pm");
+    $self->change_process_name;
     
     eval { $self->pidfile->write };
     $self->notify("Could not write the PID file because: $@") if $@;
@@ -207,7 +210,7 @@ sub server_init {
         $self->setup_signal_handler;
     }
     
-    $self->change_process_name("perl-fcgi");
+    $self->change_process_name;
     
     inner();
 }
@@ -279,8 +282,8 @@ sub received_signal {
 }
 
 sub change_process_name {
-    my ($self, $name) = @_;
-    $0 = $name;
+    my $self = shift;
+    $0 = ($self->role eq 'manager' ? $self->manager_process_name : $self->process_name);
 }
 
 sub wait : method {

@@ -6,7 +6,7 @@ use FindBin;
 use Cwd;
 use File::Spec::Functions;
 
-use Test::More no_plan => 1;
+use Test::More tests => 5;
 use Test::Exception;
 use Test::Moose;
 
@@ -29,7 +29,7 @@ lives_ok {
     $m->start;
 } '... started okay';
 
-#diag $m->status;
+#diag join "\n" => map { chomp; s/\s+$//; $_ } grep { /fcgi|overseer|minion/ } `ps auxwww`;
 
 lives_ok {
     $m->stop;

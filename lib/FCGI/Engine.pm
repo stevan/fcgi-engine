@@ -12,7 +12,7 @@ use FCGI::Engine::ProcManager;
 
 use constant DEBUG => 0;
 
-our $VERSION   = '0.02';
+our $VERSION   = '0.03';
 our $AUTHORITY = 'cpan:STEVAN';
 
 with 'MooseX::Getopt',
@@ -95,18 +95,21 @@ sub BUILD {
 }
 
 sub run {
-    my $self = shift;
+    my ($self, %addtional_options) = @_;
 
-    $self->pre_fork_init->() if $self->has_pre_fork_init;
+    $self->pre_fork_init->(%addtional_options) 
+        if $self->has_pre_fork_init;
 
-    my $handler_class = $self->handler_class;
+    my $handler_class  = $self->handler_class;
+    my $handler_method = $self->handler_method;
+        
     Class::MOP::load_class($handler_class);
 
-    ($self->handler_class->can($self->handler_method))
+    ($self->handler_class->can($handler_method))
         || confess "The handler class ("
-                 . $self->handler_class
+                 . $handler_class
                  . ") does not support the handler method ("
-                 . $self->handler_method
+                 . $handler_method
                  . ")";
 
     my $socket = 0;
@@ -139,6 +142,7 @@ sub run {
         $proc_manager = $self->manager->new({
             n_processes => $self->nproc,
             pidfile     => $self->pidfile,
+            %addtional_options
         });
 
         $self->daemon_detach(
@@ -148,21 +152,21 @@ sub run {
             dont_close_all_files => 1,
         ) if $self->detach;
         
-        $proc_manager->manage();   
+        $proc_manager->manage;   
     }
 
     while ($request->Accept() >= 0) {
         
-        $proc_manager && $proc_manager->pre_dispatch();
+        $proc_manager && $proc_manager->pre_dispatch;
 
         # Cargo-culted from Catalyst::Engine::FastCGI ...
         if ( $ENV{SERVER_SOFTWARE} && $ENV{SERVER_SOFTWARE} =~ /lighttpd/ ) {
             $ENV{PATH_INFO} ||= delete $ENV{SCRIPT_NAME};
         }
 
-        $handler_class->handler(CGI::Simple->new);
+        $handler_class->$handler_method(CGI::Simple->new);
 
-        $proc_manager && $proc_manager->post_dispatch();
+        $proc_manager && $proc_manager->post_dispatch;
     }
 }
 
@@ -358,9 +362,13 @@ I<pre_fork_init> constructor parameter.
 
 =over 4
 
-=item B<run>
+=item B<run (%addtional_options)>
 
-Call this to start the show.
+Call this to start the show. 
+
+It passes the C<%addtional_options> arguments to both the 
+C<pre_fork_init> sub and as constructor args to the 
+C<proc_manager>. 
 
 =back
 

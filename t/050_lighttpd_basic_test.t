@@ -13,7 +13,7 @@ my $lighttpd;
 BEGIN {
     $lighttpd = utils::find_lighttpd();
     plan skip_all => "A lighttpd binary must be available for this test" unless $lighttpd;     
-    plan no_plan => 1;
+    plan tests => 27;
     use_ok('FCGI::Engine');    
 }
 
