@@ -66,7 +66,7 @@ has 'manager' => (
 has 'handler_class' => (
     metaclass => 'NoGetopt',
     is        => 'ro',
-    isa       => 'Str',
+    isa       => 'Str | Object',
     required  => 1,
 );
 
@@ -103,7 +103,7 @@ sub run {
     my $handler_class  = $self->handler_class;
     my $handler_method = $self->handler_method;
         
-    Class::MOP::load_class($handler_class);
+    Class::MOP::load_class($handler_class) unless blessed $handler_class;
 
     ($self->handler_class->can($handler_method))
         || confess "The handler class ("
