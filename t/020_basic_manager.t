@@ -6,18 +6,26 @@ use FindBin;
 use Cwd;
 use File::Spec::Functions;
 
-use Test::More tests => 5;
+use Test::More;
 use Test::Exception;
 use Test::Moose;
 
 BEGIN {
+    my $got_YAML = 1;
+    eval "use YAML;";
+    if ($@) {
+       local $@;
+       eval "use YAML::Syck";
+       $got_YAML = 0 if $@;
+    }
+    plan skip_all => "Some kind of YAML parser is required for this test" unless $got_YAML;    
+    plan tests => 5;
     use_ok('FCGI::Engine::Manager');
 }
 
 my $CWD                = Cwd::cwd;
 $ENV{MX_DAEMON_STDOUT} = catfile($CWD, 'Out.txt');
 $ENV{MX_DAEMON_STDERR} = catfile($CWD, 'Err.txt');
-
 
 my $m = FCGI::Engine::Manager->new(
     conf => catfile($FindBin::Bin, 'confs', 'test_conf.yml')

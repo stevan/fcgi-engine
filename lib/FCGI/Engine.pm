@@ -76,6 +76,15 @@ has 'handler_method' => (
     default   => sub { 'handler' },
 );
 
+has 'handler_args_builder' => (
+    metaclass => 'NoGetopt',
+    is        => 'ro',
+    isa       => 'CodeRef',
+    default   => sub { 
+        sub { CGI::Simple->new }
+    },
+);
+
 has 'pre_fork_init' => (
     metaclass => 'NoGetopt',
     is        => 'ro',
@@ -101,6 +110,7 @@ sub run {
 
     my $handler_class  = $self->handler_class;
     my $handler_method = $self->handler_method;
+    my $handler_args   = $self->handler_args_builder;
         
     Class::MOP::load_class($handler_class) unless blessed $handler_class;
 
@@ -163,7 +173,7 @@ sub run {
             $ENV{PATH_INFO} ||= delete $ENV{SCRIPT_NAME};
         }
 
-        $handler_class->$handler_method(CGI::Simple->new);
+        $handler_class->$handler_method( $handler_args->() );
 
         $proc_manager && $proc_manager->post_dispatch;
     }
@@ -251,6 +261,10 @@ have had bad interactions with CGI.pm and the instance of L<CGI::Simple> we crea
 for you, so before you spend hours looking for bugs in your app, check for this 
 first instead.
 
+If you want to change this behavior and not use L<CGI::Simple> then you can 
+override this using the C<handler_args_builder> option, see the docs on that 
+below for more details.
+
 =head1 CAVEAT
 
 This module is *NIX B<only>, it definitely does not work on Windows
@@ -315,6 +329,12 @@ the request loop to dispatch your web application.
 This is the class method to be called on the I<handler_class>
 to server as a dispatch entry point to your web application. It
 will default to C<handler>.
+
+=item I<handler_args_builder>
+
+This must be a CODE ref that when called produces the arguments 
+to pass to the I<handler_method>. It defaults to a sub which 
+returns a L<CGI::Simple> object.
 
 =item I<pre_fork_init>
 

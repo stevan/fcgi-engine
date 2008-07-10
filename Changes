@@ -6,12 +6,21 @@ Revision history for Perl extension FCGI-Engine
       cases
     
     * FCGI::Engine
-      - added docs about our usage of CGI::Simple
-      - added docs about usage with Catalyst
+      - added docs about our usage of CGI::Simple (RT #35786)
+      - added docs about usage with Catalyst (RT #34488)
+      - added the handler_args_builder option to make 
+        it easier to override the default arguments passed
+        into the handler_method (RT #33885) 
+        (thanks to Bradley C. Bailey for the idea and initial patch)
+        - added tests for this
 
     * FCGI::Engine::Manager
-      - added docs about usage with Catalyst
+      - added docs about usage with Catalyst (RT #34488)
       - added example of the config file
+    
+    * t/
+      - fixed the FCGI::Engine::Manager test to make sure there 
+        is a YAML parser available for Config::Any to use.
 
 0.03 Sun. Feb. 3, 2008
     * FCGI::Engine

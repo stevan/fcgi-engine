@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 13;
+use Test::More tests => 15;
 use Test::Moose;
 
 BEGIN {
@@ -31,6 +31,12 @@ ok(!$e->has_pre_fork_init, '... we dont have any pre-fork-init');
 
 is($e->handler_class, 'Foo', '... we have a handler class');
 is($e->handler_method, 'handler', '... we have our default handler method');
+
+my $handler_args_builder = $e->handler_args_builder;
+is(ref $handler_args_builder, 'CODE', '... default handler args is an CODE ref');
+
+my $handler_args = [ $handler_args_builder->() ]; 
+isa_ok($handler_args->[0], 'CGI::Simple', '... default arg isa CGI::Simple');
 
 eval { $e->run }; 
 ok(!$@, '... we ran the handler okay');
