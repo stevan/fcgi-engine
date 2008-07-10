@@ -1,4 +1,3 @@
-
 package FCGI::Engine::Manager;
 use Moose;
 
@@ -7,7 +6,7 @@ use FCGI::Engine::Manager::Server;
 
 use Config::Any;
 
-our $VERSION   = '0.01';
+our $VERSION   = '0.02';
 our $AUTHORITY = 'cpan:STEVAN';
 
 with 'MooseX::Getopt';
@@ -149,6 +148,8 @@ FCGI::Engine::Manager - Manage multiple FCGI::Engine instances
 
 =head1 SYNOPSIS
 
+  #!/usr/bin/perl
+
   my $m = FCGI::Engine::Manager->new(
       conf => 'conf/my_app_conf.yml'
   );
@@ -157,13 +158,49 @@ FCGI::Engine::Manager - Manage multiple FCGI::Engine instances
   $m->status if $ARGV[0] eq 'status';
   $m->stop   if $ARGV[0] eq 'stop';    
 
+  # on the command line
+  
+  perl all_my_fcgi_backends.pl start
+  perl all_my_fcgi_backends.pl stop
+  # etc ...  
+
 =head1 DESCRIPTION
 
-This module handles multiple FCGI::Engine instances for you, it can 
+This module handles multiple L<FCGI::Engine> instances for you, it can 
 start, stop and provide basic status info. It is configurable using 
 L<Config::Any>, but only really the YAML format has been tested. 
 
 This module is still in it's early stages, many things may change.
+
+=head2 Use with Catalyst
+
+Since L<FCGI::Engine> is pretty much compatible with 
+L<Catalyst::Engine::FastCGI>, this module can also be used to manage 
+your L<Catalyst::Engine::FastCGI> based apps as well as your 
+L<FCGI::Engine> based apps.
+
+=head1 EXAMPLE CONFIGURATION
+
+Here is an example configuration in YAML, it should be noted that 
+the options for each server are basically the constructor params to 
+L<FCGI::Engine::Manager::Server> and are passed verbatim to it. 
+This means that if you subclass L<FCGI::Engine::Manager::Server> 
+and set the C<server_class:> option appropriately, it should pass 
+any new options you added to your subclass automatically.
+
+  ---
+  - name:            "foo.server"
+    server_class:    "FCGI::Engine::Manager::Server"
+    scriptname:      "t/scripts/foo.pl"
+    nproc:            1
+    pidfile:         "/tmp/foo.pid"
+    socket:          "/tmp/foo.socket" 
+    additional_args: [ "-I", "lib/" ]
+  - name:       "bar.server"
+    scriptname: "t/scripts/bar.pl"
+    nproc:       1
+    pidfile:    "/tmp/bar.pid"
+    socket:     "/tmp/bar.socket"
 
 =head1 BUGS
 

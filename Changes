@@ -1,5 +1,18 @@
 Revision history for Perl extension FCGI-Engine
 
+0.04 Thurs. July 10, 2008
+    - upped the MooseX::Getopt dependency since the 
+      old version was causing a test failure in certain
+      cases
+    
+    * FCGI::Engine
+      - added docs about our usage of CGI::Simple
+      - added docs about usage with Catalyst
+
+    * FCGI::Engine::Manager
+      - added docs about usage with Catalyst
+      - added example of the config file
+
 0.03 Sun. Feb. 3, 2008
     * FCGI::Engine
       - handler_method was not being used properly 
