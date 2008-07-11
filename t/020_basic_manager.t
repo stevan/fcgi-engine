@@ -41,7 +41,19 @@ lives_ok {
 
 lives_ok {
     $m->stop;
+} '... stopped okay';
+
+
+lives_ok {
+    $m->start('foo.server');
 } '... started okay';
+
+#diag join "\n" => map { chomp; s/\s+$//; $_ } grep { /fcgi|overseer|minion/ } `ps auxwww`;
+
+lives_ok {
+    $m->stop('foo.server');
+} '... stopped okay';
+
 
 unlink $ENV{MX_DAEMON_STDOUT};
 unlink $ENV{MX_DAEMON_STDERR};

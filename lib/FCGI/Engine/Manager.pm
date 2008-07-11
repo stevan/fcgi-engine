@@ -60,7 +60,9 @@ sub start {
     
     $self->log("Starting up the FCGI servers ...");
 
-    foreach my $server (@{$self->servers}) {
+    my @servers = @_ ? $self->_find_server_by_name( @_ ) : @{ $self->servers };
+
+    foreach my $server ( @servers ) {
     
         my @cli = $server->construct_command_line();
         $self->log("Running @cli");
@@ -111,7 +113,9 @@ sub stop {
         
     $self->log("Killing the FCGI servers ...");
 
-    foreach my $server (@{$self->servers}) {
+    my @servers = @_ ? $self->_find_server_by_name( @_ ) : @{ $self->servers };
+
+    foreach my $server ( @servers ) {
     
         if (-f $server->pidfile) {
             
@@ -123,7 +127,9 @@ sub stop {
             while ($pid->is_running) {
                 $self->log("pid (" . $server->pidfile . ") is still running, sleeping ...");
                 sleep 1;
-            }                       
+            } 
+            
+            $server->remove_pid_obj;
         }
     
         if (-e $server->socket) {
@@ -133,6 +139,16 @@ sub stop {
     }    
 
     $self->log("... FCGI servers have been killed");
+}
+
+
+sub _find_server_by_name {
+    my( $self, @names ) = @_;
+
+    my %wanted = map { $_ => 1 } @names;
+    my @servers = grep { exists $wanted{ $_->name } } @{ $self->servers };
+
+    return @servers;
 }
 
 1;

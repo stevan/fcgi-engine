@@ -54,7 +54,8 @@ has 'pid_obj' => (
     lazy      => 1,
     default   => sub {
         MooseX::Daemonize::Pid::File->new(file => (shift)->pidfile)
-    }
+    },
+    clearer   => 'remove_pid_obj',
 );
 
 ## methods ...
