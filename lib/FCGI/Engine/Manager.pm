@@ -96,14 +96,26 @@ sub start {
 }
 
 sub status {
-    # FIXME:
-    # there must be a better way to do this, 
-    # and even if there isn't we should come
-    # up with a better way to display them
-    # (oh yeah and filter out things not related
-    # to us as well)
-    # - SL
-    join "\n" => map { chomp; s/\s+$//; $_ } `ps auxwww | grep fcgi`;    
+    my $self = shift;
+    
+    my @servers = @_ ? $self->_find_server_by_name( @_ ) : @{ $self->servers };
+    
+    my $status = '';
+    foreach my $server ( @servers ) {
+    
+        $status .= $server->name;
+    
+        if (! -f $server->pidfile ) {
+            $status .= " is not running\n";
+            next;
+        }
+    
+        my $pid = $server->pid_obj;
+    
+        $status .= $pid->is_running ? " is running\n" : " is not running\n"
+    }
+    
+    return $status;    
 }
 
 sub stop {
@@ -176,10 +188,10 @@ FCGI::Engine::Manager - Manage multiple FCGI::Engine instances
       conf => 'conf/my_app_conf.yml'
   );
   
-  $m->start   if $ARGV[0] eq 'start';
-  $m->status  if $ARGV[0] eq 'status';
-  $m->stop    if $ARGV[0] eq 'stop';  
-  $m->restart if $ARGV[0] eq 'restart';   
+  $m->start         if $ARGV[0] eq 'start';
+  $m->stop          if $ARGV[0] eq 'stop';  
+  $m->restart       if $ARGV[0] eq 'restart';
+  print $m->status  if $ARGV[0] eq 'status';     
 
   # on the command line
   

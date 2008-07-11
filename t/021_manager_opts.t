@@ -19,7 +19,7 @@ BEGIN {
        $got_YAML = 0 if $@;
     }
     plan skip_all => "Some kind of YAML parser is required for this test" unless $got_YAML;    
-    plan tests => 9;
+    plan tests => 15;
     use_ok('FCGI::Engine::Manager');
 }
 
@@ -37,9 +37,13 @@ lives_ok {
     $m->start('foo.server');
 } '... started foo server okay';
 
+is( $m->status, "foo.server is running\nbar.server is not running\n", '... got the right status' );
+
 lives_ok {
     $m->start('bar.server');
 } '... started bar server okay';
+
+is( $m->status, "foo.server is running\nbar.server is running\n", '... got the right status' );
 
 #diag join "\n" => map { chomp; s/\s+$//; $_ } grep { /fcgi|overseer|minion/ } `ps auxwww`;
 
@@ -47,19 +51,27 @@ lives_ok {
     $m->stop();
 } '... stopped all okay';
 
+is( $m->status, "foo.server is not running\nbar.server is not running\n", '... got the right status' );
+
 ## now reverse that ...
 
 lives_ok {
     $m->start();
 } '... started all okay';
 
+is( $m->status, "foo.server is running\nbar.server is running\n", '... got the right status' );
+
 lives_ok {
     $m->stop('foo.server');
 } '... stopped foo server okay';
 
+is( $m->status, "foo.server is not running\nbar.server is running\n", '... got the right status' );
+
 lives_ok {
     $m->stop('bar.server');
 } '... stopped bar server okay';
+
+is( $m->status, "foo.server is not running\nbar.server is not running\n", '... got the right status' );
 
 #diag join "\n" => map { chomp; s/\s+$//; $_ } grep { /fcgi|overseer|minion/ } `ps auxwww`;
 

@@ -1,11 +1,14 @@
 Revision history for Perl extension FCGI-Engine
 
 0.05
-    * FCGI::Engine
+    * FCGI::Engine::Manager
       - added restart feature (thanks to Brian Cassidy)
         - added tests for this
       - added ability to start, stop and restart individual 
         servers within the conf (thanks to Brian Cassidy)
+        - added tests for this
+      - fixed my ugly hack of a ->status method 
+        (thanks to Brian Cassidy)
         - added tests for this
 
 0.04 Thurs. July 10, 2008
