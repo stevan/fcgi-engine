@@ -19,7 +19,7 @@ BEGIN {
        $got_YAML = 0 if $@;
     }
     plan skip_all => "Some kind of YAML parser is required for this test" unless $got_YAML;    
-    plan tests => 5;
+    plan tests => 6;
     use_ok('FCGI::Engine::Manager');
 }
 
@@ -37,10 +37,14 @@ lives_ok {
     $m->start('foo.server');
 } '... started okay';
 
+lives_ok {
+    $m->start('bar.server');
+} '... started okay';
+
 #diag join "\n" => map { chomp; s/\s+$//; $_ } grep { /fcgi|overseer|minion/ } `ps auxwww`;
 
 lives_ok {
-    $m->stop('foo.server');
+    $m->stop();
 } '... stopped okay';
 
 unlink $ENV{MX_DAEMON_STDOUT};

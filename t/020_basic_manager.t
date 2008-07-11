@@ -55,7 +55,7 @@ lives_ok {
     $m->stop('foo.server');
 } '... stopped okay';
 
-# ... no try starting, restarting and then stopping again ...
+# ... now try starting, restarting and then stopping again ...
 
 lives_ok {
     $m->start('foo.server');
