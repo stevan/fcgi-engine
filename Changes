@@ -1,5 +1,13 @@
 Revision history for Perl extension FCGI-Engine
 
+0.05
+    * FCGI::Engine
+      - added restart feature (thanks to bricas)
+        - added tests for this
+      - added ability to start and stop individual 
+        servers within the conf (thanks to bricas)
+        - added tests for this
+
 0.04 Thurs. July 10, 2008
     - upped the MooseX::Getopt dependency since the 
       old version was causing a test failure in certain

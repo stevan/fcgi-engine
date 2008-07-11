@@ -141,6 +141,12 @@ sub stop {
     $self->log("... FCGI servers have been killed");
 }
 
+sub restart {
+    my $self = shift;
+    $self->stop( @_ );
+    sleep( 2 ); # give stop() some time
+    $self->start( @_ );
+}
 
 sub _find_server_by_name {
     my( $self, @names ) = @_;
@@ -170,9 +176,10 @@ FCGI::Engine::Manager - Manage multiple FCGI::Engine instances
       conf => 'conf/my_app_conf.yml'
   );
   
-  $m->start  if $ARGV[0] eq 'start';
-  $m->status if $ARGV[0] eq 'status';
-  $m->stop   if $ARGV[0] eq 'stop';    
+  $m->start   if $ARGV[0] eq 'start';
+  $m->status  if $ARGV[0] eq 'status';
+  $m->stop    if $ARGV[0] eq 'stop';  
+  $m->restart if $ARGV[0] eq 'restart';   
 
   # on the command line
   

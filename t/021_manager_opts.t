@@ -19,7 +19,7 @@ BEGIN {
        $got_YAML = 0 if $@;
     }
     plan skip_all => "Some kind of YAML parser is required for this test" unless $got_YAML;    
-    plan tests => 10;
+    plan tests => 5;
     use_ok('FCGI::Engine::Manager');
 }
 
@@ -34,18 +34,6 @@ isa_ok($m, 'FCGI::Engine::Manager');
 does_ok($m, 'MooseX::Getopt');
 
 lives_ok {
-    $m->start;
-} '... started okay';
-
-#diag join "\n" => map { chomp; s/\s+$//; $_ } grep { /fcgi|overseer|minion/ } `ps auxwww`;
-
-lives_ok {
-    $m->stop;
-} '... stopped okay';
-
-# ... now try loading just a single server ... (make sure everything is cleaned up right)
-
-lives_ok {
     $m->start('foo.server');
 } '... started okay';
 
@@ -54,22 +42,6 @@ lives_ok {
 lives_ok {
     $m->stop('foo.server');
 } '... stopped okay';
-
-# ... no try starting, restarting and then stopping again ...
-
-lives_ok {
-    $m->start('foo.server');
-} '... started okay';
-
-lives_ok {
-    $m->restart('foo.server');
-} '... restarted okay';
-
-lives_ok {
-    $m->stop('foo.server');
-} '... stopped okay';
-
 
 unlink $ENV{MX_DAEMON_STDOUT};
 unlink $ENV{MX_DAEMON_STDERR};
-
