@@ -60,7 +60,7 @@ sub start {
     
     $self->log("Starting up the FCGI servers ...");
 
-    my @servers = @_ ? $self->_find_server_by_name( @_ ) : @{ $self->servers };
+    my @servers = (@_ && defined $_[0]) ? $self->_find_server_by_name( @_ ) : @{ $self->servers };
 
     foreach my $server ( @servers ) {
     
@@ -98,7 +98,7 @@ sub start {
 sub status {
     my $self = shift;
     
-    my @servers = @_ ? $self->_find_server_by_name( @_ ) : @{ $self->servers };
+    my @servers = (@_ && defined $_[0]) ? $self->_find_server_by_name( @_ ) : @{ $self->servers };
     
     my $status = '';
     foreach my $server ( @servers ) {
@@ -125,7 +125,7 @@ sub stop {
         
     $self->log("Killing the FCGI servers ...");
 
-    my @servers = @_ ? $self->_find_server_by_name( @_ ) : @{ $self->servers };
+    my @servers = (@_ && defined $_[0]) ? $self->_find_server_by_name( @_ ) : @{ $self->servers };
 
     foreach my $server ( @servers ) {
     
@@ -188,15 +188,18 @@ FCGI::Engine::Manager - Manage multiple FCGI::Engine instances
       conf => 'conf/my_app_conf.yml'
   );
   
-  $m->start         if $ARGV[0] eq 'start';
-  $m->stop          if $ARGV[0] eq 'stop';  
-  $m->restart       if $ARGV[0] eq 'restart';
-  print $m->status  if $ARGV[0] eq 'status';     
+  my ($command, $server_name) = @ARGV;
+  
+  $m->start($server_name)        if $command eq 'start';
+  $m->stop($server_name)         if $command eq 'stop';  
+  $m->restart($server_name)      if $command eq 'restart';
+  print $m->status($server_name) if $command eq 'status';     
 
   # on the command line
   
   perl all_my_fcgi_backends.pl start
   perl all_my_fcgi_backends.pl stop
+  perl all_my_fcgi_backends.pl restart foo.server  
   # etc ...  
 
 =head1 DESCRIPTION
