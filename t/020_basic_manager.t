@@ -19,7 +19,7 @@ BEGIN {
        $got_YAML = 0 if $@;
     }
     plan skip_all => "Some kind of YAML parser is required for this test" unless $got_YAML;    
-    plan tests => 5;
+    plan tests => 7;
     use_ok('FCGI::Engine::Manager');
 }
 
@@ -43,6 +43,7 @@ lives_ok {
     $m->stop;
 } '... stopped okay';
 
+# ... now try loading just a single server ... (make sure everything is cleaned up right)
 
 lives_ok {
     $m->start('foo.server');
