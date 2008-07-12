@@ -23,6 +23,8 @@ t/002_basic_with_listen.t
 t/003_basic_with_options.t
 t/010_errors.t
 t/020_basic_manager.t
+t/021_manager_opts.t
+t/022_more_manager_opts.t
 t/030_proc_manager.t
 t/050_lighttpd_basic_test.t
 t/confs/test_conf.yml

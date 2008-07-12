@@ -458,6 +458,12 @@ to cpan-RT.
 
 Stevan Little E<lt>stevan@iinteractive.comE<gt>
 
+Contributions from:
+
+Bradley C. Bailey
+
+Brian Cassidy
+
 =head1 COPYRIGHT AND LICENSE
 
 Copyright 2007-2008 by Infinity Interactive, Inc.
