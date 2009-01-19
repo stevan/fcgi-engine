@@ -69,8 +69,6 @@ sub start {
     
         unless (system(@cli) == 0) {
             $self->log("Could not execute command (@cli) exited with status $?");
-            $self->log("... stoping FCGI servers");
-            $self->stop;
             return;
         }
     

@@ -1,5 +1,7 @@
 Revision history for Perl extension FCGI-Engine
 
+    - Don't stop all servers if a server fails to start.
+
 0.05 Sat. July 12, 2008
 
     * FCGI::Engine::Manager
