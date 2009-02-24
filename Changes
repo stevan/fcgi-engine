@@ -1,5 +1,8 @@
 Revision history for Perl extension FCGI-Engine
 
+0.07 Tues. Feb. 24, 2009
+    - Getting rid of the Mac resource forks (steve jobs--)
+
 0.06 Tues. Feb. 24, 2009
     - Fix so start doesn't start another set of procs (marcus)
     - Add graceful method to do a restart with start

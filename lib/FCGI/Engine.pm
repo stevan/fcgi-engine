@@ -11,7 +11,7 @@ use FCGI::Engine::ProcManager;
 
 use constant DEBUG => 0;
 
-our $VERSION   = '0.06';
+our $VERSION   = '0.07';
 our $AUTHORITY = 'cpan:STEVAN';
 
 with 'MooseX::Getopt',
