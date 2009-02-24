@@ -460,13 +460,15 @@ Stevan Little E<lt>stevan@iinteractive.comE<gt>
 
 Contributions from:
 
+Marcus Ramberg
+
 Bradley C. Bailey
 
 Brian Cassidy
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2007-2008 by Infinity Interactive, Inc.
+Copyright 2007-2009 by Infinity Interactive, Inc.
 
 L<http://www.iinteractive.com>
 

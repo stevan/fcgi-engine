@@ -1,10 +1,10 @@
 Revision history for Perl extension FCGI-Engine
 
-0.06
-    - Fix so start doesn't start another set of procs
+0.06 Tues. Feb. 24, 2009
+    - Fix so start doesn't start another set of procs (marcus)
     - Add graceful method to do a restart with start
-      before killing old processes.
-    - Don't stop all servers if a server fails to start.
+      before killing old processes. (marcus)
+    - Don't stop all servers if a server fails to start. (marcus)
 
 0.05 Sat. July 12, 2008
 
