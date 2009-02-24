@@ -64,6 +64,15 @@ sub start {
 
     foreach my $server ( @servers ) {
     
+        if (-e $server->pidfile) {
+            my $pid = $server->pid_obj;
+            if ($pid->is_running) {
+                $self->log("Pid " . $pid->pid . " is already running");
+                return;
+            }
+            $server->remove_pid_object;
+        }
+    
         my @cli = $server->construct_command_line();
         $self->log("Running @cli");
     
@@ -133,12 +142,13 @@ sub stop {
             
             $self->log("Killing PID " . $pid->pid . " from $$ ");
             kill TERM => $pid->pid;
-            
+
             while ($pid->is_running) {
                 $self->log("pid (" . $server->pidfile . ") is still running, sleeping ...");
                 sleep 1;
             } 
             
+            $server->pid_obj->remove();
             $server->remove_pid_obj;
         }
     
@@ -156,6 +166,30 @@ sub restart {
     $self->stop( @_ );
     sleep( 2 ); # give stop() some time
     $self->start( @_ );
+}
+
+
+sub graceful {
+    my $self = shift;
+    my @servers = (@_ && defined $_[0]) ? $self->_find_server_by_name( @_ ) : @{ $self->servers };
+    my @pids;
+    foreach my $server ( @servers ) {
+        push @pids, $server->pid_obj->pid;
+        unlink($server->pidfile);
+        $server->pid_obj->remove_pid_obj();
+    }
+    $self->start( @_ );
+    foreach my $pid ( @pids ) {
+        $self->log("... Killing old fcgi process $pid");
+        kill TERM => $pid;
+    }
+    foreach my $server ( @servers ) {
+        while (-f $server->pidfile) {
+            $self->log("pid (" . $server->pidfile . ") has not been removed, sleeping ...");
+            sleep 1;
+        }
+        $server->pid_obj->write();
+    }
 }
 
 sub _find_server_by_name {
@@ -191,6 +225,7 @@ FCGI::Engine::Manager - Manage multiple FCGI::Engine instances
   $m->start($server_name)        if $command eq 'start';
   $m->stop($server_name)         if $command eq 'stop';  
   $m->restart($server_name)      if $command eq 'restart';
+  $m->graceful($server_name)      if $command eq 'graceful';
   print $m->status($server_name) if $command eq 'status';     
 
   # on the command line
