@@ -5,7 +5,7 @@ use Declare::Constraints::Simple '-All';
 use MooseX::Getopt::OptionTypeMap;
 use MooseX::Types::Path::Class;
 
-our $VERSION   = '0.07'; 
+our $VERSION   = '0.08'; 
 our $AUTHORITY = 'cpan:STEVAN';
 
 ## FCGI::Engine
@@ -23,15 +23,37 @@ MooseX::Getopt::OptionTypeMap->add_option_type_to_map(
 
 ## FCGI::Engine::Manager
 
-subtype 'FCGI::Engine::Manager::Server::Config'
-    => as 'HashRef'
-    => And(
-         IsHashRef,
-         HasAllKeys(qw[scriptname pidfile socket]),
-         OnHashKeys(
-             additional_args => IsArrayRef
-         )
+# FIXME:
+# this is ugly I know, but it is better 
+# then adding a backward incompatible 
+# change and forcing others to update 
+# their versions of Moose for this.
+# - SL
+if ($Moose::VERSION < 0.72) {
+    subtype 'FCGI::Engine::Manager::Server::Config'
+        => as 'HashRef'
+        => And(
+             IsHashRef,
+             HasAllKeys(qw[scriptname pidfile socket]),
+             OnHashKeys(
+                 additional_args => IsArrayRef
+             )
+        );
+}
+else {
+    subtype('FCGI::Engine::Manager::Server::Config',
+        {
+            as    => 'HashRef',
+            where => And(
+                 IsHashRef,
+                 HasAllKeys(qw[scriptname pidfile socket]),
+                 OnHashKeys(
+                     additional_args => IsArrayRef
+                 )
+            )
+        }
     );
+}
 
 subtype 'FCGI::Engine::Manager::Config' 
     => as 'ArrayRef[FCGI::Engine::Manager::Server::Config]';

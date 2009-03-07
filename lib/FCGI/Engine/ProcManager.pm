@@ -1,6 +1,12 @@
 package FCGI::Engine::ProcManager;
 use Moose;
-use MooseX::Params::Validate;
+# FIXME:
+# this is ugly I know, but it is better 
+# then adding a backward incompatible 
+# change and forcing others to update 
+# their versions of MX::P::V for this.
+# - SL
+use MooseX::Params::Validate ':deprecated';
 use MooseX::AttributeHelpers;
 
 use constant DEBUG => 0;
@@ -10,7 +16,7 @@ use POSIX qw(SA_RESTART SIGTERM SIGHUP);
 use FCGI::Engine::Types;
 use MooseX::Daemonize::Pid::File;
 
-our $VERSION   = '0.07'; 
+our $VERSION   = '0.08'; 
 our $AUTHORITY = 'cpan:STEVAN';
 
 has 'role' => (

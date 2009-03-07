@@ -1,5 +1,14 @@
 Revision history for Perl extension FCGI-Engine
 
+0.08 
+    * FCGI::Engine::Types
+      - fixing this to work with the latest Moose 
+        as well as older Moose
+
+    * FCGI::Engine::ProcManager
+      - fixing this to work with the latest 
+        MooseX::Params::Validate
+
 0.07 Tues. Feb. 24, 2009
     - Getting rid of the Mac resource forks (steve jobs--)
 
@@ -14,58 +23,58 @@ Revision history for Perl extension FCGI-Engine
     * FCGI::Engine::Manager
       - added restart feature (thanks to Brian Cassidy)
         - added tests for this
-      - added ability to start, stop and restart individual 
+      - added ability to start, stop and restart individual
         servers within the conf (thanks to Brian Cassidy)
         - added tests for this
-      - fixed my ugly hack of a ->status method 
+      - fixed my ugly hack of a ->status method
         (thanks to Brian Cassidy)
         - added tests for this
       - tweaked the SYNOPSIS to provide a better example
         of usage (also thanks to Brian Cassidy)
 
 0.04 Thurs. July 10, 2008
-    - upped the MooseX::Getopt dependency since the 
+    - upped the MooseX::Getopt dependency since the
       old version was causing a test failure in certain
       cases
-    
+
     * FCGI::Engine
       - added docs about our usage of CGI::Simple (RT #35786)
       - added docs about usage with Catalyst (RT #34488)
-      - added the handler_args_builder option to make 
+      - added the handler_args_builder option to make
         it easier to override the default arguments passed
-        into the handler_method (RT #33885) 
+        into the handler_method (RT #33885)
         (thanks to Bradley C. Bailey for the idea and initial patch)
         - added tests for this
 
     * FCGI::Engine::Manager
       - added docs about usage with Catalyst (RT #34488)
       - added example of the config file
-    
+
     * t/
-      - fixed the FCGI::Engine::Manager test to make sure there 
+      - fixed the FCGI::Engine::Manager test to make sure there
         is a YAML parser available for Config::Any to use.
 
 0.03 Sun. Feb. 3, 2008
     * FCGI::Engine
-      - handler_method was not being used properly 
+      - handler_method was not being used properly
         to dispatch with (reported by Reed A. Cartwright)
         - added tests for this
-       
-      - %additional_options can now be passed to run, which 
-        will then be passed to both the pre_fork_init sub and 
+
+      - %additional_options can now be passed to run, which
+        will then be passed to both the pre_fork_init sub and
         the proc_manager's constructor
         - added tests for this
-    
+
       - handler_class can now also be an instance if nessecary
         (thanks to Chris Prather)
-    
+
     * FCGI::Engine::ProcManager
       - added the manager_process_name and the process_name
         options to allow custom process naming
         - added test for this
 
 0.02 Fri. Jan. 11, 2008
-    - fixing dependency issues 
+    - fixing dependency issues
 
 0.01 Fri. Jan. 11, 2008
     - hello world
