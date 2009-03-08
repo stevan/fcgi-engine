@@ -1,12 +1,5 @@
 package FCGI::Engine::ProcManager;
 use Moose;
-# FIXME:
-# this is ugly I know, but it is better 
-# then adding a backward incompatible 
-# change and forcing others to update 
-# their versions of MX::P::V for this.
-# - SL
-use MooseX::Params::Validate ':deprecated';
 use MooseX::AttributeHelpers;
 
 use constant DEBUG => 0;
@@ -308,11 +301,10 @@ sub wait : method {
 ## signal handling stuff ...
 
 sub setup_signal_actions {
-    my ($self, $with_sa_restart) = validatep(\@_, 
-        with_sa_restart => { isa => 'Bool' }
-    );
+    my $self = shift;
+    my %args = @_;
 
-    my $sig_action = $with_sa_restart 
+    my $sig_action = (exists $args{with_sa_restart} && $args{with_sa_restart}) 
         ? $self->sigaction_sa_restart
         : $self->sigaction_no_sa_restart;
         

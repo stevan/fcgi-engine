@@ -6,8 +6,7 @@ Revision history for Perl extension FCGI-Engine
         as well as older Moose
 
     * FCGI::Engine::ProcManager
-      - fixing this to work with the latest 
-        MooseX::Params::Validate
+      - removed usage of MooseX::Params::Validate
 
 0.07 Tues. Feb. 24, 2009
     - Getting rid of the Mac resource forks (steve jobs--)

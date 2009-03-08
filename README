@@ -21,7 +21,6 @@ This module requires these other modules and libraries:
     MooseX::Daemonize
     MooseX::Getopt
     MooseX::Types::Path::Class
-    MooseX::Params::Validate
     Declare::Constraints::Simple
     FCGI
     CGI::Simple
