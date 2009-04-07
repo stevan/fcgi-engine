@@ -176,7 +176,7 @@ sub graceful {
     foreach my $server ( @servers ) {
         push @pids, $server->pid_obj->pid;
         unlink($server->pidfile);
-        $server->pid_obj->remove_pid_obj();
+        $server->remove_pid_obj();
     }
     $self->start( @_ );
     foreach my $pid ( @pids ) {
