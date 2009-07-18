@@ -4,7 +4,7 @@ use Moose;
 use MooseX::Daemonize::Pid::File;
 use FCGI::Engine::Types;
 
-our $VERSION   = '0.08';
+our $VERSION   = '0.09'; 
 our $AUTHORITY = 'cpan:STEVAN';
 
 has 'name' => (

@@ -5,7 +5,7 @@ use Declare::Constraints::Simple '-All';
 use MooseX::Getopt::OptionTypeMap;
 use MooseX::Types::Path::Class;
 
-our $VERSION   = '0.08'; 
+our $VERSION   = '0.09'; 
 our $AUTHORITY = 'cpan:STEVAN';
 
 ## FCGI::Engine

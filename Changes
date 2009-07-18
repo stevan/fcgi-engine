@@ -1,8 +1,13 @@
 Revision history for Perl extension FCGI-Engine
 
+0.09 Sat. July 18, 2009
+    * FCGI::Engine::Manager
+      - fixing broken call to remove pid object
+        in graceful restart (arcanez)
+
 0.08 Sun. Mar. 8, 2009
     * FCGI::Engine::Types
-      - fixing this to work with the latest Moose 
+      - fixing this to work with the latest Moose
         as well as older Moose
 
     * FCGI::Engine::ProcManager
