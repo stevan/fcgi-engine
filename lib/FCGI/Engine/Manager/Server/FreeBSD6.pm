@@ -1,7 +1,7 @@
 package FCGI::Engine::Manager::Server::FreeBSD6;
 use Moose;
 
-our $VERSION   = '0.09'; 
+our $VERSION   = '0.10'; 
 our $AUTHORITY = 'cpan:STEVAN';
 
 extends 'FCGI::Engine::Manager::Server';

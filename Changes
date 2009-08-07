@@ -1,5 +1,11 @@
 Revision history for Perl extension FCGI-Engine
 
+0.10 Fri. Aug. 7, 2009
+    * FCGI::Engine::Manager
+      - fixing broken call to remove pid object
+        in start (when a pid file exists but the
+        server is not running)
+
 0.09 Sat. July 18, 2009
     * FCGI::Engine::Manager
       - fixing broken call to remove pid object

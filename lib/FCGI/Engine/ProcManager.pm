@@ -9,7 +9,7 @@ use POSIX qw(SA_RESTART SIGTERM SIGHUP);
 use FCGI::Engine::Types;
 use MooseX::Daemonize::Pid::File;
 
-our $VERSION   = '0.09'; 
+our $VERSION   = '0.10'; 
 our $AUTHORITY = 'cpan:STEVAN';
 
 has 'role' => (
