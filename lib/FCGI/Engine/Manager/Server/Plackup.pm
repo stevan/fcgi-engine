@@ -9,9 +9,6 @@ extends 'FCGI::Engine::Manager::Server';
 sub construct_command_line {
     my $self = shift;
     return ("plackup",
-         ($self->has_additional_args
-             ? $self->additional_args
-             : ()),
          $self->scriptname,
          "--server",
          "FCGI",
@@ -22,7 +19,10 @@ sub construct_command_line {
          "--listen",
          $self->socket,
          "--detach",
-         1);
+         1,
+         ($self->has_additional_args
+             ? $self->additional_args
+             : ()));
 }
 
 __PACKAGE__->meta->make_immutable;
