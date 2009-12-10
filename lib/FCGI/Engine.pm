@@ -11,7 +11,7 @@ use FCGI::Engine::ProcManager;
 
 use constant DEBUG => 0;
 
-our $VERSION   = '0.10'; 
+our $VERSION   = '0.11';
 our $AUTHORITY = 'cpan:STEVAN';
 
 with 'MooseX::Getopt',
@@ -80,7 +80,7 @@ has 'handler_args_builder' => (
     metaclass => 'NoGetopt',
     is        => 'ro',
     isa       => 'CodeRef',
-    default   => sub { 
+    default   => sub {
         sub { CGI::Simple->new }
     },
 );
@@ -105,13 +105,13 @@ sub BUILD {
 sub run {
     my ($self, %addtional_options) = @_;
 
-    $self->pre_fork_init->(%addtional_options) 
+    $self->pre_fork_init->(%addtional_options)
         if $self->has_pre_fork_init;
 
     my $handler_class  = $self->handler_class;
     my $handler_method = $self->handler_method;
     my $handler_args   = $self->handler_args_builder;
-        
+
     Class::MOP::load_class($handler_class) unless blessed $handler_class;
 
     ($self->handler_class->can($handler_method))
@@ -145,7 +145,7 @@ sub run {
 
         $self->daemon_fork && return if $self->detach;
 
-        # make sure any subclasses are loaded ...        
+        # make sure any subclasses are loaded ...
         Class::MOP::load_class($self->manager);
 
         $proc_manager = $self->manager->new({
@@ -160,17 +160,26 @@ sub run {
             # we definetely need this ...
             dont_close_all_files => 1,
         ) if $self->detach;
-        
-        $proc_manager->manage;   
+
+        $proc_manager->manage;
     }
 
     while ($request->Accept() >= 0) {
-        
+
         $proc_manager && $proc_manager->pre_dispatch;
 
-        # Cargo-culted from Catalyst::Engine::FastCGI ...
-        if ( $ENV{SERVER_SOFTWARE} && $ENV{SERVER_SOFTWARE} =~ /lighttpd/ ) {
-            $ENV{PATH_INFO} ||= delete $ENV{SCRIPT_NAME};
+        # Cargo-culted from Catalyst::Engine::FastCGI
+        # and Plack::Server::FCGI, thanks guys :)
+        if ( $ENV{SERVER_SOFTWARE} ) {
+            if ( $ENV{SERVER_SOFTWARE} =~ /lighttpd/ ) {
+                $ENV{PATH_INFO}   ||= delete $ENV{SCRIPT_NAME};
+                $ENV{SCRIPT_NAME} ||= '';
+                $ENV{SERVER_NAME} =~ s/:\d+$//; # cut off port number
+            }
+            elsif ( $ENV{SERVER_SOFTWARE} =~ /^nginx/ ) {
+                my $script_name = $ENV{SCRIPT_NAME};
+                $ENV{PATH_INFO} =~ s/^$script_name//g;
+            }
         }
 
         $handler_class->$handler_method( $handler_args->() );
@@ -194,9 +203,9 @@ FCGI::Engine - A flexible engine for running FCGI-based applications
   # in scripts/my_web_app_fcgi.pl
   use strict;
   use warnings;
-  
+
   use FCGI::Engine;
-  
+
   FCGI::Engine->new_with_options(
       handler_class  => 'My::Web::Application',
       handler_method => 'run',
@@ -212,57 +221,49 @@ FCGI::Engine - A flexible engine for running FCGI-based applications
   perl scripts/my_web_app_fcgi.pl --nproc 10 --pidfile /tmp/my_app.pid \
                                   --listen /tmp/my_app.socket --daemon
 
-  # see also FCGI::Engine::Manager for managing 
+  # see also FCGI::Engine::Manager for managing
   # multiple FastCGI backends under one script
-
-=head1 IMPORTANT NOTE
-
-This is an early release of this module, it is intended to fill the 
-need for a better set of FastCGI tools. At this point it still lacks
-good documentation and a few of the bits still need some work. However
-it is reasonably stable and I am using it actively at $work. If you have
-any questions about this module feel free to contact me. 
-
-The API for L<FCGI::Engine> is probably the only one which will not change 
-(since is really just emulates the L<Catalyst::Engine::FCGI> API), all 
-other modules in this distro are subject to change at this point.
 
 =head1 DESCRIPTION
 
-This module helps manage FCGI based web applications by providing a 
+This module helps manage FCGI based web applications by providing a
 wrapper which handles most of the low-level FCGI details for you. It
-can run FCGI programs as simple scripts or as full standalone 
+can run FCGI programs as simple scripts or as full standalone
 socket based servers who are managed by L<FCGI::Engine::ProcManager>.
 
-The code is largely based (*cough* stolen *cough*) on the 
-L<Catalyst::Engine::FastCGI> module, and provides a  command line 
-interface which is compatible with that module. But of course it 
-does not require L<Catalyst> or anything L<Catalyst> related. So 
-you can use this module with your L<CGI::Application>-based web 
+The code is largely based (*cough* stolen *cough*) on the
+L<Catalyst::Engine::FastCGI> module, and provides a  command line
+interface which is compatible with that module. But of course it
+does not require L<Catalyst> or anything L<Catalyst> related. So
+you can use this module with your L<CGI::Application>-based web
 application or any other L<Random::Web::Framework>-based web app.
 
-=head2 Using with Catalyst or other web frameworks
+=head2 Using with Catalyst, Plack or other web frameworks
 
 This module (FCGI::Engine) is B<not> a replacement for L<Catalyst::Engine::FastCGI>
-but instead the L<FCGI::Engine::Manager> (and all it's configuration tools) can be 
-used to manager L<Catalyst> apps as well as FCGI::Engine based applications. For 
+but instead the L<FCGI::Engine::Manager> (and all it's configuration tools) can be
+used to manager L<Catalyst> apps as well as FCGI::Engine based applications. For
 example, at work we have an application which has 6 different FCGI backends running.
-Three of them use an ancient in-house web framework with simple FCGI::Engine wrappers, 
+Three of them use an ancient in-house web framework with simple FCGI::Engine wrappers,
 one which uses L<CGI::Application> and an FCGI::Engine wrapper and then two L<Catalyst>
-applications. They all happily and peacefully coexist and are all managed with the 
+applications. They all happily and peacefully coexist and are all managed with the
 same L<FCGI::Engine::Manager> script.
+
+As of version 0.11 we now have L<Plack>/L<PSGI> applications support via the
+L<FCGI::Engine::Manager::Server::Plackup> module. See that module for more
+information about how it can be used.
 
 =head2 Note about CGI.pm usage
 
 This module uses L<CGI::Simple> as a sane replacement for CGI.pm, it will pass in
-a L<CGI::Simple> instance to your chosen C<handler_method> for you, so there is no 
+a L<CGI::Simple> instance to your chosen C<handler_method> for you, so there is no
 need to create your own instance of it. There have been a few cases from users who
 have had bad interactions with CGI.pm and the instance of L<CGI::Simple> we create
-for you, so before you spend hours looking for bugs in your app, check for this 
+for you, so before you spend hours looking for bugs in your app, check for this
 first instead.
 
-If you want to change this behavior and not use L<CGI::Simple> then you can 
-override this using the C<handler_args_builder> option, see the docs on that 
+If you want to change this behavior and not use L<CGI::Simple> then you can
+override this using the C<handler_args_builder> option, see the docs on that
 below for more details.
 
 =head1 CAVEAT
@@ -285,7 +286,7 @@ depend on one another.
 =item I<--listen -l>
 
 This should be a file path where the unix domain socket file
-should live. If this parameter is specified, then you B<must> 
+should live. If this parameter is specified, then you B<must>
 also specify a location for the pidfile.
 
 =item I<--nproc -n>
@@ -295,18 +296,18 @@ that L<FCGI::Engine::ProcManager> should start up. The default is 1.
 
 =item I<--pidfile -p>
 
-This should be a file path where your pidfile should live. This 
+This should be a file path where your pidfile should live. This
 parameter is only used if the I<listen> parameter is specified.
 
 =item I<--daemon -d>
 
-This is a boolean parameter and has no argument, it is either 
+This is a boolean parameter and has no argument, it is either
 used or not. It determines if the script should daemonize itself.
 This parameter only used if the I<listen> parameter is specified.
 
 =item I<--manager -m>
 
-This allows you to pass the name of a L<FCGI::ProcManager> subclass 
+This allows you to pass the name of a L<FCGI::ProcManager> subclass
 to use. The default is to use L<FCGI::Engine::ProcManager>, and any value
 passed to this parameter B<must> be a subclass of L<FCGI::ProcManager>.
 
@@ -314,14 +315,14 @@ passed to this parameter B<must> be a subclass of L<FCGI::ProcManager>.
 
 =head2 Constructor
 
-In addition to the command line parameters, there are a couple 
-parameters that the constuctor expects. 
+In addition to the command line parameters, there are a couple
+parameters that the constuctor expects.
 
 =over 4
 
 =item I<handler_class>
 
-This is expected to be a class name, which will be used inside 
+This is expected to be a class name, which will be used inside
 the request loop to dispatch your web application.
 
 =item I<handler_method>
@@ -332,14 +333,14 @@ will default to C<handler>.
 
 =item I<handler_args_builder>
 
-This must be a CODE ref that when called produces the arguments 
-to pass to the I<handler_method>. It defaults to a sub which 
+This must be a CODE ref that when called produces the arguments
+to pass to the I<handler_method>. It defaults to a sub which
 returns a L<CGI::Simple> object.
 
 =item I<pre_fork_init>
 
 This is an optional CODE reference which will be executed prior
-to the request loop, and in a multi-proc context, prior to any 
+to the request loop, and in a multi-proc context, prior to any
 forking (so as to take advantage of OS COW features).
 
 =back
@@ -357,7 +358,7 @@ This will return a L<Path::Class::File> object.
 
 =item B<is_listening>
 
-A predicate used to determine if the I<--listen> parameter was 
+A predicate used to determine if the I<--listen> parameter was
 specified.
 
 =item B<nproc>
@@ -371,7 +372,7 @@ This will return a L<Path::Class::File> object.
 
 =item B<has_pidfile>
 
-A predicate used to determine if the I<--pidfile> parameter was 
+A predicate used to determine if the I<--pidfile> parameter was
 specified.
 
 =item B<detach>
@@ -380,7 +381,7 @@ Returns the value passed on the command line with I<--daemon>.
 
 =item B<should_detach>
 
-A predicate used to determine if the I<--daemon> parameter was 
+A predicate used to determine if the I<--daemon> parameter was
 specified.
 
 =item B<manager>
@@ -395,7 +396,7 @@ Returns the value passed on the command line with I<--manager>.
 
 =item B<has_pre_fork_init>
 
-A predicate telling you if anything was passed to the 
+A predicate telling you if anything was passed to the
 I<pre_fork_init> constructor parameter.
 
 =back
@@ -406,11 +407,11 @@ I<pre_fork_init> constructor parameter.
 
 =item B<run (%addtional_options)>
 
-Call this to start the show. 
+Call this to start the show.
 
-It passes the C<%addtional_options> arguments to both the 
-C<pre_fork_init> sub and as constructor args to the 
-C<proc_manager>. 
+It passes the C<%addtional_options> arguments to both the
+C<pre_fork_init> sub and as constructor args to the
+C<proc_manager>.
 
 =back
 
@@ -420,12 +421,12 @@ C<proc_manager>.
 
 =item B<BUILD>
 
-This is the L<Moose> BUILD method, it checks some of 
+This is the L<Moose> BUILD method, it checks some of
 our parameters to be sure all is sane.
 
 =item B<meta>
 
-This returns the L<Moose> metaclass assocaited with 
+This returns the L<Moose> metaclass assocaited with
 this class.
 
 =back
@@ -436,14 +437,14 @@ this class.
 
 =item L<Catalyst::Engine::FastCGI>
 
-I took all the guts of that module and squished them around a bit and 
-stuffed them in here. 
+I took all the guts of that module and squished them around a bit and
+stuffed them in here.
 
 =item L<MooseX::Getopt>
 
 =item L<FCGI::ProcManager>
 
-I refactored this module and renamed it L<FCGI::Engine::ProcManager>, 
+I refactored this module and renamed it L<FCGI::Engine::ProcManager>,
 which is now included in this distro.
 
 =back

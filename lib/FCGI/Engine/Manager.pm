@@ -6,7 +6,7 @@ use FCGI::Engine::Manager::Server;
 
 use Config::Any;
 
-our $VERSION   = '0.10';
+our $VERSION   = '0.11';
 our $AUTHORITY = 'cpan:STEVAN';
 
 with 'MooseX::Getopt';
@@ -225,7 +225,7 @@ FCGI::Engine::Manager - Manage multiple FCGI::Engine instances
   $m->start($server_name)        if $command eq 'start';
   $m->stop($server_name)         if $command eq 'stop';
   $m->restart($server_name)      if $command eq 'restart';
-  $m->graceful($server_name)      if $command eq 'graceful';
+  $m->graceful($server_name)     if $command eq 'graceful';
   print $m->status($server_name) if $command eq 'status';
 
   # on the command line
@@ -241,14 +241,18 @@ This module handles multiple L<FCGI::Engine> instances for you, it can
 start, stop and provide basic status info. It is configurable using
 L<Config::Any>, but only really the YAML format has been tested.
 
-This module is still in it's early stages, many things may change.
-
 =head2 Use with Catalyst
 
 Since L<FCGI::Engine> is pretty much compatible with
 L<Catalyst::Engine::FastCGI>, this module can also be used to manage
 your L<Catalyst::Engine::FastCGI> based apps as well as your
 L<FCGI::Engine> based apps.
+
+=head2 Use with Plack
+
+L<Plack> support is provided via the L<FCGI::Engine::Manager::Server::Plackup>
+module. All that is required is setting the C<server_class> parameter
+in the configuarion and it will Just Work.
 
 =head1 EXAMPLE CONFIGURATION
 
@@ -257,7 +261,9 @@ the options for each server are basically the constructor params to
 L<FCGI::Engine::Manager::Server> and are passed verbatim to it.
 This means that if you subclass L<FCGI::Engine::Manager::Server>
 and set the C<server_class:> option appropriately, it should pass
-any new options you added to your subclass automatically.
+any new options you added to your subclass automatically. The third
+server in the list shows exactly how this is used with a L<Plack>
+application.
 
   ---
   - name:            "foo.server"
@@ -272,6 +278,13 @@ any new options you added to your subclass automatically.
     nproc:       1
     pidfile:    "/tmp/bar.pid"
     socket:     "/tmp/bar.socket"
+  - name:            "baz.server"
+    server_class:    "FCGI::Engine::Manager::Server::Plackup"
+    scriptname:      "t/scripts/baz.psgi" # the .psgi file
+    nproc:            1
+    pidfile:         "/tmp/baz.pid"
+    socket:          "/tmp/baz.socket"
+    additional_args: [ "-e", "production" ] # plackup specific option
 
 =head1 BUGS
 
