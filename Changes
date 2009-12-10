@@ -1,6 +1,6 @@
 Revision history for Perl extension FCGI-Engine
 
-0.11
+0.11 Thurs. Dec. 10, 2009
     + FCGI::Engine::Manager::Server::Plackup
       - added support for running Plack based apps
         using the FCGI::Engine::Manager controls
