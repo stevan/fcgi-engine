@@ -41,7 +41,9 @@ Plack::Server::FCGI::Engine - A Plack::Server backend for FCGI::Engine
 
 =head1 DESCRIPTION
 
-This is a subclass of L<Plack::Server::FCGI>
+This is a subclass of L<Plack::Server::FCGI> which will use the
+L<Plack::Server::FCGI::Engine::ProcManager> process manager by default,
+instead of L<FCGI::ProcManager>.
 
 =head1 BUGS
 

@@ -35,21 +35,12 @@ __END__
 
 =head1 NAME
 
-Plack::Server::FCGI::Engine::ProcManager - A Moosey solution to this problem
-
-=head1 SYNOPSIS
-
-  use Plack::Server::FCGI::Engine::ProcManager;
+Plack::Server::FCGI::Engine::ProcManager - A process manager for Plack::Server::FCGI::Engine
 
 =head1 DESCRIPTION
 
-=head1 METHODS
-
-=over 4
-
-=item B<>
-
-=back
+A subclass of L<FCGI::Engine::ProcManager> that is compatiable with
+L<Plack::Server::FCGI::Engine> and L<Plack::Server::FCGI>.
 
 =head1 BUGS
 
