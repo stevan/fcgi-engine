@@ -1,4 +1,4 @@
-FCGI-Engine version 0.11
+FCGI-Engine version 0.12
 ===========================
 
 See the individual module documentation for more information
@@ -17,7 +17,6 @@ DEPENDENCIES
 This module requires these other modules and libraries:
 
     Moose
-    MooseX::AttributeHelpers
     MooseX::Daemonize
     MooseX::Getopt
     MooseX::Types::Path::Class
@@ -26,6 +25,11 @@ This module requires these other modules and libraries:
     CGI::Simple
     POSIX
     Config::Any
+
+For Plack support:
+
+    MooseX::NonMoose
+    Plack
 
 COPYRIGHT AND LICENCE
 

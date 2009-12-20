@@ -1,5 +1,18 @@
 Revision history for Perl extension FCGI-Engine
 
+0.12
+    + Plack::Server::FCGI::Engine
+    + Plack::Server::FCGI::Engine::ProcManager
+      - subclasses to make it easier to use the
+        FCGI::Engine::ProcManager with your Plack
+        based application
+        - added tests for this
+
+    * FCGI::Engine::Manager::Server::Plackup
+      - this now uses Plack::Server::FCGI::Engine
+        by default (can be overriden with the
+        'server_type' option)
+
 0.11 Thurs. Dec. 10, 2009
     + FCGI::Engine::Manager::Server::Plackup
       - added support for running Plack based apps

@@ -1,17 +1,23 @@
 package FCGI::Engine::Manager::Server::Plackup;
 use Moose;
 
-our $VERSION   = '0.11';
+our $VERSION   = '0.12';
 our $AUTHORITY = 'cpan:STEVAN';
 
 extends 'FCGI::Engine::Manager::Server';
+
+has 'server_type' => (
+    is       => 'ro',
+    isa      => 'Str',
+    default  => sub { 'FCGI::Engine' }
+);
 
 sub construct_command_line {
     my $self = shift;
     return ("plackup",
          $self->scriptname,
          "--server",
-         "FCGI",
+         $self->server_type,
          "--nproc",
          $self->nproc,
          "--pidfile",

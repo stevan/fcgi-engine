@@ -1,6 +1,5 @@
 package FCGI::Engine::ProcManager;
 use Moose;
-use MooseX::AttributeHelpers;
 
 use constant DEBUG => 0;
 
@@ -9,7 +8,7 @@ use POSIX qw(SA_RESTART SIGTERM SIGHUP);
 use FCGI::Engine::Types;
 use MooseX::Daemonize::Pid::File;
 
-our $VERSION   = '0.11'; 
+our $VERSION   = '0.12';
 our $AUTHORITY = 'cpan:STEVAN';
 
 has 'role' => (
@@ -17,31 +16,31 @@ has 'role' => (
     isa     => 'FCGI::Engine::ProcManager::Role',
     default => sub { 'manager' }
 );
-  
+
 has 'start_delay' => (
     is      => 'rw',
     isa     => 'Int',
-    default => sub { 0 }    
+    default => sub { 0 }
 );
 
 has 'die_timeout' => (
     is      => 'rw',
     isa     => 'Int',
-    default => sub { 60 }    
-);  
-  
+    default => sub { 60 }
+);
+
 has 'n_processes' => (
     is       => 'rw',
     isa      => 'Int',
     default  => sub { 0 }
-); 
+);
 
 has 'pidfile' => (
     is       => 'rw',
     isa      => 'MooseX::Daemonize::Pid::File',
 #    coerce   => 1,
 );
-        
+
 has 'no_signals' => (
     is      => 'rw',
     isa     => 'Bool',
@@ -63,18 +62,21 @@ has 'manager_pid' => (
 );
 
 has 'server_pids' => (
-    metaclass => 'Collection::Bag',
-    is        => 'rw',
-    clearer   => 'forget_all_pids',      
-    default   => sub { +{} },
-    provides  => {
-        'add'    => 'add_pid',
-        'keys'   => 'get_all_pids',
-        'delete' => 'remove_pid',
-        'empty'  => 'has_pids',
-        'count'  => 'pid_count',
+    traits  => [ 'Hash' ],
+    is      => 'rw',
+    isa     => 'HashRef',
+    clearer => 'forget_all_pids',
+    default => sub { +{} },
+    handles => {
+        '_add_pid'     => 'set',
+        'get_all_pids' => 'keys',
+        'remove_pid'   => 'delete',
+        'has_pids'     => 'count',
+        'pid_count'    => 'count',
     }
 );
+
+sub add_pid { (shift)->_add_pid( @_, 1 ) }
 
 has 'process_name'         => (is => 'ro', isa => 'Str', default => sub { 'perl-fcgi'    });
 has 'manager_process_name' => (is => 'ro', isa => 'Str', default => sub { 'perl-fcgi-pm' });
@@ -104,14 +106,14 @@ sub BUILD {
     my $SIG_CODEREF;
 
     sub sig_sub { $SIG_CODEREF->(@_) if ref $SIG_CODEREF }
-    
+
     sub clear_signal_handler { undef $SIG_CODEREF }
 
     sub setup_signal_handler {
         my $self = shift;
         $SIG_CODEREF = $self->role eq 'manager'
-            ? sub { defined $self && $self->manager_sig_handler(@_) } 
-            : sub { defined $self && $self->server_sig_handler(@_)  };    
+            ? sub { defined $self && $self->manager_sig_handler(@_) }
+            : sub { defined $self && $self->server_sig_handler(@_)  };
     }
 }
 
@@ -131,42 +133,42 @@ sub manage {
     my $manager_pid = $$;
 
     MANAGING_LOOP: while (1) {
-        
+
         # FIXME
-        # we should tell the process that it is being 
-        # run under some kind of daemon, which will mean 
+        # we should tell the process that it is being
+        # run under some kind of daemon, which will mean
         # that getppid will usually then return 1
         # - SL
         #getppid() == 1 and
         #  return $self->die("calling process has died");
-        
+
         $self->n_processes > 0 or
             return $self->die;
-        
+
         # while we have fewer servers than we want.
         PIDS: while ($self->pid_count < $self->n_processes) {
-            
+
             if (my $pid = fork) {
                # the manager remembers the server.
                $self->add_pid($pid);
                $self->notify("server (pid $pid) started");
-            
-            } 
+
+            }
             elsif (! defined $pid) {
                 return $self->abort("fork: $!");
-            } 
+            }
             else {
                 $self->manager_pid($manager_pid);
                 # the server exits the managing loop.
                 last MANAGING_LOOP;
             }
-            
+
             for (my $s = $self->start_delay; $s; $s = sleep $s) {};
         }
-        
+
         # this should block until the next server dies.
         $self->wait;
-        
+
     }# while 1
 
     SERVER:
@@ -179,7 +181,7 @@ sub manage {
     $self->server_init;
     $self->notify("initialized");
 
-    # server returns 
+    # server returns
     return 1;
 }
 
@@ -187,30 +189,30 @@ sub manage {
 
 sub manager_init {
     my $self = shift;
-    
+
     unless ($self->no_signals) {
         $self->setup_signal_actions(with_sa_restart => 0);
         $self->setup_signal_handler;
     }
-    
+
     $self->change_process_name;
-    
+
     eval { $self->pidfile->write };
     $self->notify("Could not write the PID file because: $@") if $@;
-    
+
     inner();
 }
 
 sub server_init {
     my $self = shift;
-    
+
     unless ($self->no_signals) {
         $self->setup_signal_actions(with_sa_restart => 0);
         $self->setup_signal_handler;
     }
-    
+
     $self->change_process_name;
-    
+
     inner();
 }
 
@@ -219,16 +221,16 @@ sub server_init {
 
 sub pre_dispatch {
     my $self = shift;
-    
+
     $self->setup_signal_actions(with_sa_restart => 1)
-        unless $self->no_signals;        
-    
+        unless $self->no_signals;
+
     inner();
 }
 
 sub post_dispatch {
     my $self = shift;
-    
+
     $self->exit("safe exit after SIGTERM")
         if $self->received_signal("TERM");
 
@@ -238,10 +240,10 @@ sub post_dispatch {
     if ($self->manager_pid and getppid() != $self->manager_pid) {
         $self->exit("safe exit: manager has died");
     }
-    
+
     $self->setup_signal_actions(with_sa_restart => 0)
         unless $self->no_signals;
-    
+
     inner();
 }
 
@@ -254,15 +256,15 @@ sub manager_sig_handler {
     if ($name eq "TERM") {
         $self->notify("received signal $name");
         $self->die("safe exit from signal $name");
-    } 
+    }
     elsif ($name eq "HUP") {
-        # send a TERM to each of the servers, 
+        # send a TERM to each of the servers,
         # and pretend like nothing happened..
         if (my @pids = $self->get_all_pids) {
             $self->notify("sending TERM to PIDs, @pids");
             kill TERM => @pids;
         }
-    } 
+    }
     else {
         $self->notify("ignoring signal $name");
     }
@@ -287,14 +289,14 @@ sub change_process_name {
 
 sub wait : method {
     my $self = shift;
-    
+
     # wait for the next server to die.
     next if (my $pid = CORE::wait()) < 0;
-    
+
     # notify when one of our servers have died.
-    $self->remove_pid($pid) 
+    $self->remove_pid($pid)
         and $self->notify("server (pid $pid) exited with status $?");
-    
+
     return $pid;
 }
 
@@ -304,13 +306,13 @@ sub setup_signal_actions {
     my $self = shift;
     my %args = @_;
 
-    my $sig_action = (exists $args{with_sa_restart} && $args{with_sa_restart}) 
+    my $sig_action = (exists $args{with_sa_restart} && $args{with_sa_restart})
         ? $self->sigaction_sa_restart
         : $self->sigaction_no_sa_restart;
-        
-    POSIX::sigaction(POSIX::SIGTERM, $sig_action) 
+
+    POSIX::sigaction(POSIX::SIGTERM, $sig_action)
         || $self->notify("sigaction: SIGTERM: $!");
-    POSIX::sigaction(POSIX::SIGHUP,  $sig_action) 
+    POSIX::sigaction(POSIX::SIGHUP,  $sig_action)
         || $self->notify("sigaction: SIGHUP: $!");
 }
 
@@ -326,32 +328,32 @@ sub notify {
 
 sub die : method {
     my ($self, $msg, $n) = @_;
-    
+
     # stop handling signals.
     $self->clear_signal_handler;
     $SIG{HUP}  = 'DEFAULT';
     $SIG{TERM} = 'DEFAULT';
-    
-    $self->pidfile->remove 
+
+    $self->pidfile->remove
         || $self->notify("Could not remove PID file: $!");
-    
+
     # prepare to die no matter what.
     if (defined $self->die_timeout) {
         $SIG{ALRM} = sub { $self->abort("wait timeout") };
         alarm $self->die_timeout;
     }
-    
+
     # send a TERM to each of the servers.
     if (my @pids = $self->get_all_pids) {
         $self->notify("sending TERM to PIDs, @pids");
         kill TERM => @pids;
     }
-    
+
     # wait for the servers to die.
     while ($self->has_pids) {
         $self->wait;
     }
-    
+
     # die already.
     $self->exit("dying: $msg", $n);
 }
@@ -365,12 +367,12 @@ sub abort {
 sub exit : method {
     my ($self, $msg, $n) = @_;
     $n ||= 0;
-    
-    # if we still have children at this point, 
+
+    # if we still have children at this point,
     # something went wrong. SIGKILL them now.
-    kill KILL => $self->get_all_pids 
+    kill KILL => $self->get_all_pids
         if $self->has_pids;
-    
+
     $self->notify($msg);
     $@ = $msg;
     CORE::exit $n;
@@ -388,18 +390,18 @@ FCGI::Engine::ProcManager - module for managing FastCGI applications.
 
 =head1 DESCRIPTION
 
-This module is a refactoring of L<FCGI::ProcManager>, it behaves exactly the 
-same, but the API is a little different. The function-oriented API has been 
-removed in favor of object-oriented API. The C<pm_> prefix has been removed 
-from  the hook routines and instead they now use the C<augment> and C<inner> 
-functionality from L<Moose>. More docs will come eventually. 
+This module is a refactoring of L<FCGI::ProcManager>, it behaves exactly the
+same, but the API is a little different. The function-oriented API has been
+removed in favor of object-oriented API. The C<pm_> prefix has been removed
+from  the hook routines and instead they now use the C<augment> and C<inner>
+functionality from L<Moose>. More docs will come eventually.
 
 =head2 Signal Handling
 
 FCGI::Engine::ProcManager attempts to do the right thing for proper shutdowns.
 
 When it receives a SIGHUP, it sends a SIGTERM to each of its children, and
-then resumes its normal operations.   
+then resumes its normal operations.
 
 When it receives a SIGTERM, it sends a SIGTERM to each of its children, sets
 an alarm(3) "die timeout" handler, and waits for each of its children to
@@ -408,19 +410,19 @@ return status 0.  If all children do not die by the time the "die timeout"
 occurs, the process manager sends a SIGKILL to each of the remaining
 children, and exists with return status 1.
 
-FCGI::Engine::ProcManager uses POSIX::sigaction() to override the default 
-SA_RESTART policy used for perl's %SIG behavior.  Specifically, the process 
-manager never uses SA_RESTART, while the child FastCGI servers turn off 
+FCGI::Engine::ProcManager uses POSIX::sigaction() to override the default
+SA_RESTART policy used for perl's %SIG behavior.  Specifically, the process
+manager never uses SA_RESTART, while the child FastCGI servers turn off
 SA_RESTART around the accept loop, but re-enstate it otherwise.
 
 The desired (and implemented) effect is to give a request as big a chance as
 possible to succeed and to delay their exits until after their request,
 while allowing the FastCGI servers waiting for new requests to die right
-away. 
+away.
 
 =head1 METHODS
 
-I will fill this in more eventually, but for now if you really wanna know, 
+I will fill this in more eventually, but for now if you really wanna know,
 read the source.
 
 =head1 SEE ALSO
@@ -429,7 +431,7 @@ read the source.
 
 =item L<FCGI::ProcManager>
 
-This module is a fork of the FCGI::ProcManager code, with lots of 
+This module is a fork of the FCGI::ProcManager code, with lots of
 code cleanup as well as general Moosificaition.
 
 =back

@@ -10,8 +10,7 @@ all_from 'lib/FCGI/Engine.pm';
 license 'perl';
 
 # prereqs
-requires 'Moose'                    => 0.32;
-requires 'MooseX::AttributeHelpers' => 0.06;
+requires 'Moose'                    => 0.90;
 requires 'MooseX::Daemonize'        => 0.06;
 requires 'MooseX::Getopt'           => 0.14;
 requires 'MooseX::Types::Path::Class';
@@ -20,6 +19,11 @@ requires 'FCGI';
 requires 'CGI::Simple';
 requires 'POSIX';
 requires 'Config::Any';
+
+feature 'Plack Support',
+  -default           => 0,
+  'MooseX::NonMoose' => 0.07;
+  'Plack'            => 0;
 
 # things the tests need
 build_requires 'Test::More';

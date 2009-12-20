@@ -14,6 +14,8 @@ lib/FCGI/Engine/Manager/Server/FreeBSD6.pm
 lib/FCGI/Engine/Manager/Server/Plackup.pm
 lib/FCGI/Engine/ProcManager.pm
 lib/FCGI/Engine/Types.pm
+lib/Plack/Server/FCGI/Engine.pm
+lib/Plack/Server/FCGI/Engine/ProcManager.pm
 Makefile.PL
 MANIFEST
 META.yml
@@ -29,10 +31,16 @@ t/022_more_manager_opts.t
 t/023_manager_w_plackup.t
 t/030_proc_manager.t
 t/050_lighttpd_basic_test.t
+t/051_lighttpd_basic_tcp_test.t
+t/100_plack_server_fcgi_engine.t
+t/101_plack_server_fcgi_engine_client.t
+t/102_plack_server_fcgi_compat.t
 t/confs/test_conf.yml
 t/confs/test_plack_conf.yml
+t/lib/FCGIUtils.pm
 t/lib/utils.pm
 t/lighttpd_confs/050_lighttpd_basic_test.conf
+t/lighttpd_confs/051_lighttpd_basic_tcp_test.conf
 t/lighttpd_confs/fcgi_engine.lighttpd.base.conf
 t/pod-coverage.t
 t/pod.t
