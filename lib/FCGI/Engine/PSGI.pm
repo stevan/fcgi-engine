@@ -9,21 +9,10 @@ our $AUTHORITY = 'cpan:STEVAN';
 extends 'FCGI::Engine::Core';
 
 has 'app' => (
-    is        => 'rw',
-    isa       => 'CodeRef',
-    predicate => 'has_app',
+    is       => 'ro',
+    isa      => 'CodeRef',
+    required => 1,
 );
-
-augment 'initialize' => sub {
-    my ( $self, %addtional_options ) = @_;
-
-    unless ( $self->has_app ) {
-        (exists $addtional_options{ 'app' })
-            || confess "You must supply an 'app' key in the params to 'run'";
-
-        $self->app( $addtional_options{ 'app' } );
-    }
-};
 
 augment 'prepare_environment' => sub {
     my ($self, $env) = @_;
@@ -67,21 +56,44 @@ __END__
 
 =head1 NAME
 
-FCGI::Engine::PSGI - A Moosey solution to this problem
+FCGI::Engine::PSGI - Run PSGI applications with FCGI::Engine
 
 =head1 SYNOPSIS
 
+  # in scripts/my_psgi_app_fcgi.pl
+  use strict;
+  use warnings;
+
   use FCGI::Engine::PSGI;
+
+  FCGI::Engine::PSGI->new_with_options(
+      app => sub {
+          my $env = shift;
+          [
+              200,
+              [ 'Content-type' => 'text/html' ],
+              [ "Hello World" ]
+          ]
+      }
+  )->run;
+
+  # run as normal FCGI script
+  perl scripts/my_psgi_app_fcgi.pl
+
+  # run as standalone FCGI server
+  perl scripts/my_psgi_app_fcgi.pl --nproc 10 --pidfile /tmp/my_app.pid \
+                                   --listen /tmp/my_app.socket --daemon
+
+  # see also FCGI::Engine::Manager for managing
+  # multiple FastCGI backends under one script
 
 =head1 DESCRIPTION
 
-=head1 METHODS
-
-=over 4
-
-=item B<>
-
-=back
+This is an extension of L<FCGI::Engine::Core> to support L<PSGI> applications.
+You can refer to the L<FCGI::Engine> docs for most of what you need to know,
+the only different being that instead of a C<handler_class>, C<handler_method>
+and C<handler_args> you simply have the C<app> attribute, which is expected
+to be a L<PSGI> compliant application.
 
 =head1 BUGS
 

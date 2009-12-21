@@ -196,15 +196,18 @@ __END__
 
 FCGI::Engine::Core - A base class for various FCGI::Engine flavors
 
-=head1 SYNOPSIS
-
 =head1 DESCRIPTION
 
-=head1 PARAMETERS
+This is a base class for various FCGI::Engine flavors, it should be
+possible to subclass this to add different approaches to FCGI::Engine.
 
-=head1 METHODS
+The basic L<FCGI::Engine> shows a Catalyst/CGI::Application style
+approach with a simple handler class, while the L<FCGI::Engine::PSGI>
+shows how this can be used to run things like PSGI applications.
 
-=head1 SEE ALSO
+This class is mostly of interest to other FCGI::Engine flavor
+developers, who should pretty much just read the source. The relevant
+docs are to be found in L<FCGI::Engine> and L<FCGI::Engine::PSGI>.
 
 =head1 BUGS
 
@@ -215,14 +218,6 @@ to cpan-RT.
 =head1 AUTHOR
 
 Stevan Little E<lt>stevan@iinteractive.comE<gt>
-
-Contributions from:
-
-Marcus Ramberg
-
-Bradley C. Bailey
-
-Brian Cassidy
 
 =head1 COPYRIGHT AND LICENSE
 

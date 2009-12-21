@@ -17,7 +17,7 @@ BEGIN {
         eval "use IO::String;";
         plan skip_all => "IO::String is required for this test" if $@;
     }
-    plan tests => 14;
+    plan tests => 13;
     use_ok('FCGI::Engine::PSGI');
 }
 
@@ -40,7 +40,6 @@ is($e->manager, 'FCGI::Engine::ProcManager', '... we have the default manager (F
 
 ok(!$e->has_pre_fork_init, '... we dont have any pre-fork-init');
 
-ok($e->has_app, '... we have an app');
 is($e->app, $app, '... and it is our app');
 
 my $var;

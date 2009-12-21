@@ -22,7 +22,8 @@ requires 'Config::Any';
 
 feature 'Plack Support',
   -default           => 0,
-  'MooseX::NonMoose' => 0.07;
+  'MooseX::NonMoose' => 0.07,
+  'IO::String'       => 0,  # for the tests
   'Plack'            => 0;
 
 # things the tests need
