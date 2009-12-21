@@ -1,66 +1,12 @@
 package FCGI::Engine;
 use Moose;
 
-use FCGI;
 use CGI::Simple;
-
-use MooseX::Daemonize::Pid::File;
-
-use FCGI::Engine::Types;
-use FCGI::Engine::ProcManager;
-
-use constant DEBUG => 0;
 
 our $VERSION   = '0.12';
 our $AUTHORITY = 'cpan:STEVAN';
 
-with 'MooseX::Getopt',
-     'MooseX::Daemonize::Core';
-
-has 'listen' => (
-    metaclass   => 'Getopt',
-    is          => 'ro',
-    isa         => 'FCGI::Engine::Listener',
-    coerce      => 1,
-    cmd_aliases => 'l',
-    predicate   => 'is_listening',
-);
-
-has 'nproc' => (
-    metaclass   => 'Getopt',
-    is          => 'ro',
-    isa         => 'Int',
-    default     => sub { 1 },
-    cmd_aliases => 'n',
-);
-
-has 'pidfile' => (
-    metaclass   => 'Getopt',
-    is          => 'ro',
-    isa         => 'MooseX::Daemonize::Pid::File',
-    coerce      => 1,
-    cmd_aliases => 'p',
-    predicate   => 'has_pidfile',
-);
-
-has 'detach' => (
-    metaclass   => 'Getopt',
-    is          => 'ro',
-    isa         => 'Bool',
-    cmd_flag    => 'daemon',
-    cmd_aliases => 'd',
-    predicate   => 'should_detach',
-);
-
-has 'manager' => (
-    metaclass   => 'Getopt',
-    is          => 'ro',
-    isa         => 'Str',
-    default     => sub { 'FCGI::Engine::ProcManager' },
-    cmd_aliases => 'M',
-);
-
-# options to specify in your script
+extends 'FCGI::Engine::Core';
 
 has 'handler_class' => (
     metaclass => 'NoGetopt',
@@ -85,28 +31,8 @@ has 'handler_args_builder' => (
     },
 );
 
-has 'pre_fork_init' => (
-    metaclass => 'NoGetopt',
-    is        => 'ro',
-    isa       => 'CodeRef',
-    predicate => 'has_pre_fork_init',
-);
-
-## methods ...
-
-sub BUILD {
-    my $self = shift;
-
-    ($self->has_pidfile)
-        || confess "You must specify a pidfile if you are listening"
-            if $self->is_listening;
-}
-
-sub run {
-    my ($self, %addtional_options) = @_;
-
-    $self->pre_fork_init->(%addtional_options)
-        if $self->has_pre_fork_init;
+augment 'initialize' => sub {
+    my ( $self, %addtional_options ) = @_;
 
     my $handler_class  = $self->handler_class;
     my $handler_method = $self->handler_method;
@@ -120,72 +46,14 @@ sub run {
                  . ") does not support the handler method ("
                  . $handler_method
                  . ")";
+};
 
-    my $socket = 0;
+sub create_environment { \%ENV }
 
-    if ($self->is_listening) {
-        my $old_umask = umask;
-        umask(0);
-        $socket = FCGI::OpenSocket($self->listen, 100);
-        umask($old_umask);
-    }
-
-    my $request = FCGI::Request(
-        \*STDIN,
-        \*STDOUT,
-        \*STDERR,
-        \%ENV,
-        $socket,
-        &FCGI::FAIL_ACCEPT_ON_INTR
-    );
-
-    my $proc_manager;
-
-    if ($self->is_listening) {
-
-        $self->daemon_fork && return if $self->detach;
-
-        # make sure any subclasses are loaded ...
-        Class::MOP::load_class($self->manager);
-
-        $proc_manager = $self->manager->new({
-            n_processes => $self->nproc,
-            pidfile     => $self->pidfile,
-            %addtional_options
-        });
-
-        $self->daemon_detach(
-            # Not sure we need this ...
-            no_double_fork       => 1,
-            # we definetely need this ...
-            dont_close_all_files => 1,
-        ) if $self->detach;
-
-        $proc_manager->manage;
-    }
-
-    while ($request->Accept() >= 0) {
-
-        $proc_manager && $proc_manager->pre_dispatch;
-
-        # Cargo-culted from Catalyst::Engine::FastCGI
-        # and Plack::Server::FCGI, thanks guys :)
-        if ( $ENV{SERVER_SOFTWARE} ) {
-            if ( $ENV{SERVER_SOFTWARE} =~ /lighttpd/ ) {
-                $ENV{PATH_INFO}   ||= delete $ENV{SCRIPT_NAME};
-                $ENV{SCRIPT_NAME} ||= '';
-                $ENV{SERVER_NAME} =~ s/:\d+$//; # cut off port number
-            }
-            elsif ( $ENV{SERVER_SOFTWARE} =~ /^nginx/ ) {
-                my $script_name = $ENV{SCRIPT_NAME};
-                $ENV{PATH_INFO} =~ s/^$script_name//g;
-            }
-        }
-
-        $handler_class->$handler_method( $handler_args->() );
-
-        $proc_manager && $proc_manager->post_dispatch;
-    }
+sub handle_request {
+    my $self = shift;
+    my $method = $self->handler_method;
+    $self->handler_class->$method( $self->handler_args_builder->() );
 }
 
 1;
