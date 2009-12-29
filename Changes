@@ -1,6 +1,6 @@
 Revision history for Perl extension FCGI-Engine
 
-0.12
+0.12 Tues. Dec. 29. 2009
     + FCGI::Engine::PSGI
       - run PSGI applications using FCGI::Engine
         - added tests for this

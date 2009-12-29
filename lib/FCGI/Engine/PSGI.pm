@@ -3,7 +3,7 @@ use Moose;
 
 use Plack::Util;
 
-our $VERSION   = '0.01';
+our $VERSION   = '0.12';
 our $AUTHORITY = 'cpan:STEVAN';
 
 extends 'FCGI::Engine::Core';
@@ -91,7 +91,7 @@ FCGI::Engine::PSGI - Run PSGI applications with FCGI::Engine
 
 This is an extension of L<FCGI::Engine::Core> to support L<PSGI> applications.
 You can refer to the L<FCGI::Engine> docs for most of what you need to know,
-the only different being that instead of a C<handler_class>, C<handler_method>
+the only difference being that instead of a C<handler_class>, C<handler_method>
 and C<handler_args> you simply have the C<app> attribute, which is expected
 to be a L<PSGI> compliant application.
 
