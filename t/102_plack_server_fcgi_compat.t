@@ -12,9 +12,9 @@ BEGIN {
         eval "use Plack;";
         plan skip_all => "Plack is required for this test" if $@;
     }
-    use Plack::Server::FCGI::Engine;
 }
 
+use Plack::Server::FCGI::Engine;
 use Test::TCP;
 use Plack::Test::Suite;
 use t::lib::FCGIUtils;
