@@ -10,9 +10,9 @@ all_from 'lib/FCGI/Engine.pm';
 license 'perl';
 
 # prereqs
-requires 'Moose'                    => 0.90;
-requires 'MooseX::Daemonize'        => 0.06;
-requires 'MooseX::Getopt'           => 0.14;
+requires 'Moose'                    => 0.93;
+requires 'MooseX::Daemonize'        => 0.09;
+requires 'MooseX::Getopt'           => 0.26;
 requires 'MooseX::Types::Path::Class';
 requires 'Declare::Constraints::Simple';
 requires 'FCGI';

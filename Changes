@@ -1,5 +1,12 @@
 Revision history for Perl extension FCGI-Engine
 
+0.13 Thurs. Dec. 31, 2009
+    - fixing test files that were causing false
+      CPAN Tester failings (Jay Shirley)
+    - pushed all dependencies up to the latest
+      versions, might also help some odd CPAN
+      Tester failures
+
 0.12 Tues. Dec. 29. 2009
     + FCGI::Engine::PSGI
       - run PSGI applications using FCGI::Engine
