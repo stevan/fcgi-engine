@@ -23,8 +23,8 @@ requires 'Config::Any';
 feature 'Plack Support',
   -default           => 0,
   'MooseX::NonMoose' => 0.07,
-  'IO::String'       => 0,  # for the tests
-  'Plack'            => 0;
+  'Plack'            => 0.9025,
+  'IO::String'       => 0;  # for the tests
 
 # things the tests need
 build_requires 'Test::More';
