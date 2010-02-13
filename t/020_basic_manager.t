@@ -12,12 +12,8 @@ use Test::Moose;
 
 BEGIN {
     my $got_YAML = 1;
-    eval "use YAML;";
-    if ($@) {
-       local $@;
-       eval "use YAML::Syck";
-       $got_YAML = 0 if $@;
-    }
+    eval "use YAML::XS;";
+    $got_YAML = 0 if $@;
     plan skip_all => "Some kind of YAML parser is required for this test" unless $got_YAML;    
     plan tests => 19;
     use_ok('FCGI::Engine::Manager');
