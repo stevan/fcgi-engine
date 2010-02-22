@@ -1,5 +1,12 @@
 Revision history for Perl extension FCGI-Engine
 
+0.14 Mon. Feb. 22, 2010
+    - updating copyright on all files
+    - updating some test files to require YAML::XS since
+      YAML and YAML::Syck are not the suggested YAML parser
+      for Config::Any
+      - thanks to Justin "arcanez" Hunter
+
 0.13 Thurs. Dec. 31, 2009
     - fixing test files that were causing false
       CPAN Tester failings (Jay Shirley)

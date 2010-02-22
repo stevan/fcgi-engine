@@ -1,7 +1,7 @@
 package Plack::Server::FCGI::Engine::ProcManager;
 use Moose;
 
-our $VERSION   = '0.13';
+our $VERSION   = '0.14';
 our $AUTHORITY = 'cpan:STEVAN';
 
 extends 'FCGI::Engine::ProcManager';
@@ -54,7 +54,7 @@ Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2009 Infinity Interactive, Inc.
+Copyright 2009-2010 Infinity Interactive, Inc.
 
 L<http://www.iinteractive.com>
 
