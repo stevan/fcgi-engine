@@ -50,10 +50,5 @@ eval {
 };
 ok(!$@, '... we ran the handler okay') || warn $@;
 
-is($var,
-q{Status: 200
-Content-type: text/html
-
-Hello World},
-'... got the expect output too');
+is($var, "Status: 200\r\nContent-type: text/html\r\n\r\nHello World", '... got the expect output too');
 

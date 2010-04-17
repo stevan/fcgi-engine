@@ -1,5 +1,15 @@
 Revision history for Perl extension FCGI-Engine
 
+0.15 Sat. April 17, 2010
+    - fixing Plack support to work with the latest
+      Plack version
+      - changed Plack::Server:: to Plack::Handler::
+          - Plack::Server:: is deprecated and will
+            be removed in subsequent releases
+          - adjusted tests to use Plack::Handler::
+      - updated FCGI::Engine::PSGI to more closely
+        follow what is in Plack::Handler::FCGI
+
 0.14 Mon. Feb. 22, 2010
     - updating copyright on all files
     - updating some test files to require YAML::XS since

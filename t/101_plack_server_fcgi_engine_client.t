@@ -14,7 +14,7 @@ BEGIN {
     }
 }
 
-use Plack::Server::FCGI::Engine;
+use Plack::Handler::FCGI::Engine;
 use Test::TCP;
 use Plack::Test::Suite;
 use t::lib::FCGIUtils;
@@ -32,7 +32,7 @@ test_fcgi_standalone(
 
 sub run_one {
     my($port, $app) = @_;
-    my $server = Plack::Server::FCGI::Engine->new(
+    my $server = Plack::Handler::FCGI::Engine->new(
         host        => '127.0.0.1',
         port        => $port,
         pidfile     => '/tmp/101_plack_server_fcgi_engine_client.pid',

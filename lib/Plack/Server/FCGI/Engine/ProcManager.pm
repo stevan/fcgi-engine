@@ -1,29 +1,10 @@
 package Plack::Server::FCGI::Engine::ProcManager;
 use Moose;
 
-our $VERSION   = '0.14';
+our $VERSION   = '0.15';
 our $AUTHORITY = 'cpan:STEVAN';
 
-extends 'FCGI::Engine::ProcManager';
-
-has 'pidfile' => (
-    init_arg => 'pid_fname',
-    is       => 'rw',
-    isa      => 'MooseX::Daemonize::Pid::File',
-    coerce   => 1,
-);
-
-# FCGI::ProcManager compat
-
-sub pm_manage        { (shift)->manage( @_ )        }
-sub pm_pre_dispatch  { (shift)->pre_dispatch( @_ )  }
-sub pm_post_dispatch { (shift)->post_dispatch( @_ ) }
-
-sub notify {
-    my ($self, $msg) = @_;
-    $msg =~ s/\s*$/\n/;
-    print STDERR "FastCGIEngine: " . $self->role() . " (pid $$): " . $msg;
-}
+extends 'Plack::Handler::FCGI::Engine::ProcManager';
 
 __PACKAGE__->meta->make_immutable;
 
@@ -35,12 +16,11 @@ __END__
 
 =head1 NAME
 
-Plack::Server::FCGI::Engine::ProcManager - A process manager for Plack::Server::FCGI::Engine
+Plack::Server::FCGI::Engine::ProcManager - DEPRECATED use Plack::Handler::FCGI::Engine::ProcManager
 
 =head1 DESCRIPTION
 
-A subclass of L<FCGI::Engine::ProcManager> that is compatiable with
-L<Plack::Server::FCGI::Engine> and L<Plack::Server::FCGI>.
+B<DEPRECATED> use Plack::Handler::FCGI::Engine::ProcManager
 
 =head1 BUGS
 

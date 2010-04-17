@@ -1,19 +1,10 @@
 package Plack::Server::FCGI::Engine;
 use Moose;
-use MooseX::NonMoose;
 
-use Plack::Server::FCGI::Engine::ProcManager;
-
-our $VERSION   = '0.14';
+our $VERSION   = '0.15';
 our $AUTHORITY = 'cpan:STEVAN';
 
-extends 'Plack::Server::FCGI';
-
-has 'manager' => (
-    is      => 'ro',
-    isa     => 'Str | ClassName',
-    default => sub { 'Plack::Server::FCGI::Engine::ProcManager' },
-);
+extends 'Plack::Handler::FCGI::Engine';
 
 __PACKAGE__->meta->make_immutable;
 
@@ -25,25 +16,11 @@ __END__
 
 =head1 NAME
 
-Plack::Server::FCGI::Engine - A Plack::Server backend for FCGI::Engine
-
-=head1 SYNOPSIS
-
-  use Plack::Server::FCGI::Engine;
-
-  my $server = Plack::Server::FCGI::Engine->new(
-      nproc  => $num_proc,
-      listen => $listen,
-      detach => 1,
-  );
-
-  $server->run($app);
+Plack::Server::FCGI::Engine - DEPRECATED use Plack::Handler::FCGI::Engine
 
 =head1 DESCRIPTION
 
-This is a subclass of L<Plack::Server::FCGI> which will use the
-L<Plack::Server::FCGI::Engine::ProcManager> process manager by default,
-instead of L<FCGI::ProcManager>.
+B<DEPRECATED> use Plack::Handler::FCGI::Engine.
 
 =head1 BUGS
 

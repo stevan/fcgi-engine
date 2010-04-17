@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!perl
 
 use strict;
 use warnings;
@@ -12,5 +12,5 @@ use FCGI::Engine;
 
 FCGI::Engine->new_with_options(handler_class => 'Foo')->run(
     process_name         => 'minion',
-    manager_process_name => 'overseer',    
+    manager_process_name => 'overseer',
 );

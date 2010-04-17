@@ -3,7 +3,7 @@ use Moose;
 
 use Plack::Util;
 
-our $VERSION   = '0.14';
+our $VERSION   = '0.15';
 our $AUTHORITY = 'cpan:STEVAN';
 
 extends 'FCGI::Engine::Core';
@@ -13,6 +13,12 @@ has 'app' => (
     isa      => 'CodeRef',
     required => 1,
 );
+
+# NOTE:
+# Most of this is taken from
+# Plack::Handler::FCGI or at
+# least heavily based on it.
+# - SL
 
 augment 'prepare_environment' => sub {
     my ($self, $env) = @_;
@@ -26,6 +32,8 @@ augment 'prepare_environment' => sub {
         'psgi.multithread'  => Plack::Util::FALSE,
         'psgi.multiprocess' => Plack::Util::TRUE,
         'psgi.run_once'     => Plack::Util::FALSE,
+        'psgi.streaming'    => Plack::Util::TRUE,
+        'psgi.nonblocking'  => Plack::Util::FALSE,
     };
 };
 
@@ -33,17 +41,46 @@ sub handle_request {
     my ( $self, $env ) = @_;
 
     my $res = Plack::Util::run_app( $self->app, $env );
-    print "Status: $res->[0]\n";
+
+    if (ref $res eq 'ARRAY') {
+        $self->_handle_response($res);
+    }
+    elsif (ref $res eq 'CODE') {
+        $res->(sub {
+            $self->_handle_response($_[0]);
+        });
+    }
+    else {
+        die "Bad response $res";
+    }
+}
+
+sub _handle_response {
+    my ($self, $res) = @_;
+
+    *STDOUT->autoflush(1);
+
+    my $hdrs;
+    $hdrs = "Status: $res->[0]\015\012";
+
     my $headers = $res->[1];
     while (my ($k, $v) = splice @$headers, 0, 2) {
-        print "$k: $v\n";
+        $hdrs .= "$k: $v\015\012";
     }
-    print "\n";
+    $hdrs .= "\015\012";
 
-    my $body = $res->[2];
+    print STDOUT $hdrs;
+
     my $cb = sub { print STDOUT $_[0] };
-
-    Plack::Util::foreach($body, $cb);
+    my $body = $res->[2];
+    if (defined $body) {
+        Plack::Util::foreach($body, $cb);
+    }
+    else {
+        return Plack::Util::inline_object
+            write => $cb,
+            close => sub { };
+    }
 }
 
 __PACKAGE__->meta->make_immutable;

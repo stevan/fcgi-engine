@@ -15,7 +15,7 @@ BEGIN {
 }
 
 use Test::TCP;
-use Plack::Server::FCGI::Engine;
+use Plack::Handler::FCGI::Engine;
 use Plack::Test::Suite;
 use t::lib::FCGIUtils;
 
@@ -32,7 +32,7 @@ test_lighty_external(
 
 sub run_one {
     my($port, $app) = @_;
-    my $server = Plack::Server::FCGI::Engine->new(
+    my $server = Plack::Handler::FCGI::Engine->new(
         host        => '127.0.0.1',
         port        => $port,
         pidfile     => '/tmp/100_plack_server_fcgi_engine.pid',
