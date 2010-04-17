@@ -9,8 +9,8 @@ use Test::More;
 BEGIN {
     {
         local $@;
-        eval "use Plack;";
-        plan skip_all => "Plack is required for this test" if $@;
+        eval "use Plack; use FCGI::Client;";
+        plan skip_all => "Plack and FCGI::Client are required for this test" if $@;
     }
 }
 
