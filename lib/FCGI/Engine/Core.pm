@@ -57,6 +57,13 @@ has 'manager' => (
     cmd_aliases => 'M',
 );
 
+has 'use_manager' => (
+    metaclass => 'Getopt',
+    is        => 'ro',
+    isa       => 'Bool',
+    default   => 0,
+);
+
 # options to specify in your script
 
 has 'pre_fork_init' => (
@@ -171,6 +178,14 @@ sub run {
             dont_close_all_files => 1,
         ) if $self->detach;
 
+        $proc_manager->manage;
+    }
+
+    # We do not listen but we do want more than one processes being forked and
+    # want to take the benefit of running the process manager as well. This
+    # makes sense if the FastCGI script is started directly via Apache.
+    elsif ( $self->use_manager ) {
+        $proc_manager = $self->create_proc_manager( %addtional_options );
         $proc_manager->manage;
     }
 

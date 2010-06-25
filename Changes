@@ -1,5 +1,9 @@
 Revision history for Perl extension FCGI-Engine
 
+    - add new attribute 'use_manager' so the
+      ProcManager can be used even if you're
+      not listening
+
 0.15 Sat. April 17, 2010
     - fixing Plack support to work with the latest
       Plack version
