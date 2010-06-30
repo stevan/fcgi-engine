@@ -1,5 +1,7 @@
 Revision history for Perl extension FCGI-Engine
 
+    - Fix bug: Exiting subroutine via next in
+      ProcManager
     - add new attribute 'use_manager' so the
       ProcManager can be used even if you're
       not listening

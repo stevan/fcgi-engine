@@ -291,7 +291,7 @@ sub wait : method {
     my $self = shift;
 
     # wait for the next server to die.
-    next if (my $pid = CORE::wait()) < 0;
+    return if (my $pid = CORE::wait()) < 0;
 
     # notify when one of our servers have died.
     $self->remove_pid($pid)
