@@ -3,7 +3,7 @@ use Moose;
 
 use CGI::Simple;
 
-our $VERSION   = '0.15';
+our $VERSION   = '0.16';
 our $AUTHORITY = 'cpan:STEVAN';
 
 extends 'FCGI::Engine::Core';
@@ -334,6 +334,8 @@ Marcus Ramberg
 Bradley C. Bailey
 
 Brian Cassidy
+
+Johannes Plunien
 
 =head1 COPYRIGHT AND LICENSE
 
