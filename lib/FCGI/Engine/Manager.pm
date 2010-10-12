@@ -6,7 +6,7 @@ use FCGI::Engine::Manager::Server;
 
 use Config::Any;
 
-our $VERSION   = '0.16';
+our $VERSION   = '0.17';
 our $AUTHORITY = 'cpan:STEVAN';
 
 with 'MooseX::Getopt';

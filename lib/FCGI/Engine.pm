@@ -3,7 +3,7 @@ use Moose;
 
 use CGI::Simple;
 
-our $VERSION   = '0.16';
+our $VERSION   = '0.17';
 our $AUTHORITY = 'cpan:STEVAN';
 
 extends 'FCGI::Engine::Core';

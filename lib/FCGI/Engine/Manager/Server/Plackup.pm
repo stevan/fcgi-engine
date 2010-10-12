@@ -1,7 +1,7 @@
 package FCGI::Engine::Manager::Server::Plackup;
 use Moose;
 
-our $VERSION   = '0.16';
+our $VERSION   = '0.17';
 our $AUTHORITY = 'cpan:STEVAN';
 
 extends 'FCGI::Engine::Manager::Server';

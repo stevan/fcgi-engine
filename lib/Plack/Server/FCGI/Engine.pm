@@ -1,7 +1,7 @@
 package Plack::Server::FCGI::Engine;
 use Moose;
 
-our $VERSION   = '0.16';
+our $VERSION   = '0.17';
 our $AUTHORITY = 'cpan:STEVAN';
 
 extends 'Plack::Handler::FCGI::Engine';
