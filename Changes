@@ -1,5 +1,10 @@
 Revision history for Perl extension FCGI-Engine
 
+0.17
+    - fixing the TCP --listen option to follow
+      the correct :<port> format (thanks to
+      Andreas Marienborg for spotting this)
+
 0.16 Sat. July 10, 2010
     - Fix bug: Exiting subroutine via next in
       ProcManager (fixed by Johannes Plunien)

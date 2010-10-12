@@ -13,7 +13,7 @@ my $lighttpd;
 BEGIN {
     $lighttpd = utils::find_lighttpd();
     plan skip_all => "A lighttpd binary must be available for this test" unless $lighttpd;
-    plan tests => 26;
+    plan tests => 27;
     use_ok('FCGI::Engine');
 }
 
@@ -36,7 +36,7 @@ $ENV{MX_DAEMON_STDERR} = catfile($CWD, 'Err.txt');
     }
 }
 
-my $SOCKET  = '127.0.0.1:10001';
+my $SOCKET  = ':10001';
 my $PIDFILE = '/tmp/051_lighttpd_basic_tcp_test.pid';
 
 @ARGV = (
@@ -51,6 +51,7 @@ does_ok($e, 'MooseX::Getopt');
 
 ok($e->is_listening, '... we are listening');
 is($e->listen, $SOCKET, '... we have the right socket location');
+ok(!Scalar::Util::blessed($e->listen), '... this is a socket, not a Path::Class::File');
 
 is($e->nproc, 1, '... we have the default 1 proc');
 

@@ -5,17 +5,17 @@ use Declare::Constraints::Simple '-All';
 use MooseX::Getopt::OptionTypeMap;
 use MooseX::Types::Path::Class;
 
-our $VERSION   = '0.16'; 
+our $VERSION   = '0.16';
 our $AUTHORITY = 'cpan:STEVAN';
 
 ## FCGI::Engine
 
 subtype 'FCGI::Engine::ListenerPort'
-    => as 'Int'
-    => where { $_ >= 1 && $_ <= 65535 };
+    => as 'Str'
+    => where { /\:(\d+)/ && $1 >= 1 && $1 <= 65535 };
 
-subtype 'FCGI::Engine::Listener' 
-    => as 'Path::Class::File | FCGI::Engine::ListenerPort';
+subtype 'FCGI::Engine::Listener'
+    => as 'FCGI::Engine::ListenerPort | Path::Class::File';
 
 MooseX::Getopt::OptionTypeMap->add_option_type_to_map(
     'FCGI::Engine::Listener' => '=s',
@@ -24,9 +24,9 @@ MooseX::Getopt::OptionTypeMap->add_option_type_to_map(
 ## FCGI::Engine::Manager
 
 # FIXME:
-# this is ugly I know, but it is better 
-# then adding a backward incompatible 
-# change and forcing others to update 
+# this is ugly I know, but it is better
+# then adding a backward incompatible
+# change and forcing others to update
 # their versions of Moose for this.
 # - SL
 if ($Moose::VERSION < 0.72) {
@@ -55,7 +55,7 @@ else {
     );
 }
 
-subtype 'FCGI::Engine::Manager::Config' 
+subtype 'FCGI::Engine::Manager::Config'
     => as 'ArrayRef[FCGI::Engine::Manager::Server::Config]';
 
 ## FCGI::Engine::ProcManager
@@ -74,7 +74,7 @@ FCGI::Engine::Types - Type constraints for FCGI::Engine
 
 =head1 DESCRIPTION
 
-This is all the type constraints needed by the FCGI::Engine modules, 
+This is all the type constraints needed by the FCGI::Engine modules,
 no user serviceable parts inside (unless you are subclassing stuff).
 
 =head1 BUGS
