@@ -20,7 +20,7 @@ sub construct_command_line {
          $self->server_type,
          "--nproc",
          $self->nproc,
-         "--pidfile",
+         "--pid",
          $self->pidfile,
          "--listen",
          $self->socket,
