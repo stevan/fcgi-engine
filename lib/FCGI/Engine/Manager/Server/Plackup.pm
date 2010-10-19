@@ -24,8 +24,7 @@ sub construct_command_line {
          $self->pidfile,
          "--listen",
          $self->socket,
-         "--detach",
-         1,
+         "--daemonize",
          ($self->has_additional_args
              ? $self->additional_args
              : ()));
