@@ -12,14 +12,18 @@ has 'server_type' => (
     default  => sub { 'FCGI::Engine' }
 );
 
+has 'workers' => (
+    is       => 'ro',
+    isa      => 'Int'
+);
+
 sub construct_command_line {
     my $self = shift;
     return ("plackup",
          $self->scriptname,
          "--server",
          $self->server_type,
-         "--nproc",
-         $self->nproc,
+         ( $self->workers ? ( "--workers", $self->workers ) : ( "--nproc", $self->nproc ) ),
          "--pid",
          $self->pidfile,
          "--listen",
