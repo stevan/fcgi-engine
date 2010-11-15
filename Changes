@@ -1,6 +1,19 @@
 Revision history for Perl extension FCGI-Engine
 
-0.17 Tues. Oct. 12, 2010
+0.17 Mon. Nov. 15, 2010
+    - fixing the plack -E flag (it changed)
+    - changing plackup usage to --daemonize
+      instead of --detach (it is more useful
+      this way)
+    - changing plackup usage to --pid instead
+      of --pidfile (also more useful this way)
+    - added optional --workers to plackup server
+      manager as an alternate to --nproc. this
+      makes it possible to use it with Starman,
+      and other plack backends too.
+
+      (^^ all these changes above thanks to bricas)
+
     - fixing the TCP --listen option to follow
       the correct :<port> format (thanks to
       Andreas Marienborg for spotting this)
