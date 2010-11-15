@@ -1,6 +1,6 @@
 Revision history for Perl extension FCGI-Engine
 
-0.17 Mon. Nov. 15, 2010
+0.18 Mon. Nov. 15, 2010
     - fixing the plack -E flag (it changed)
     - changing plackup usage to --daemonize
       instead of --detach (it is more useful
@@ -14,6 +14,7 @@ Revision history for Perl extension FCGI-Engine
 
       (^^ all these changes above thanks to bricas)
 
+0.17 Tues. Oct. 12, 2010
     - fixing the TCP --listen option to follow
       the correct :<port> format (thanks to
       Andreas Marienborg for spotting this)

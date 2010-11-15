@@ -4,7 +4,7 @@ use MooseX::NonMoose;
 
 use Plack::Handler::FCGI::Engine::ProcManager;
 
-our $VERSION   = '0.17';
+our $VERSION   = '0.18';
 our $AUTHORITY = 'cpan:STEVAN';
 
 extends 'Plack::Handler::FCGI';
