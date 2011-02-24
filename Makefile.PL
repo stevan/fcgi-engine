@@ -26,7 +26,7 @@ feature 'Plack Support',
   -default           => 0,
   'MooseX::NonMoose' => 0.07,
   'Plack'            => 0.9910,
-  'FCGI::Client'     => 0.04, # for the tests
+  'FCGI::Client'     => 0.06, # for the tests
   'IO::String'       => 0;    # for the tests
 
 # things the tests need
