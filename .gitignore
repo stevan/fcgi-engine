@@ -7,3 +7,6 @@ Makefile
 blib/
 inc/
 pm_to_blib
+Err.txt
+Out.txt
+
