@@ -17,8 +17,8 @@ BEGIN {
     plan skip_all => "Some kind of YAML parser is required for this test" unless $got_YAML;
     {
         local $@;
-        eval "use Plack;";
-        plan skip_all => "Plack is required for this test" if $@;
+        eval "use Plack 0.9910; use FCGI::Client 0.04; use MooseX::NonMoose 0.07; use IO::String;";
+        plan skip_all => "Plack 0.9910, FCGI::Client and MooseX::NonMoose are required for this test" if $@;
     }
     plan tests => 11;
     use_ok('FCGI::Engine::Manager');
