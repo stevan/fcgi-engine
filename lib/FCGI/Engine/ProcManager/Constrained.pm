@@ -3,8 +3,6 @@ use Moose;
 use Config;
 use Try::Tiny;
 
-use constant IS_WIN32 => $Config{'osname'} eq 'MSWin32' ? 1 : 0;
-
 extends 'FCGI::Engine::ProcManager';
 
 sub BUILD {
@@ -114,10 +112,6 @@ BEGIN {
     elsif ($Config{'osname'} =~ /(?:bsd|aix)/i && _load('BSD::Resource') {
         # on OSX, getrusage() is returning 0 for proc & shared size.
         *_platform_check_size   = \&_bsd_size_check;
-        *_platform_getppid = \&_perl_getppid;
-    }
-    elsif (IS_WIN32 && _load('Win32::API') && $mod_perl::VERSION < 1.99) {
-        *_platform_check_size   = \&_win32_size_check;
         *_platform_getppid = \&_perl_getppid;
     }
     else {
