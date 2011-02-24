@@ -1,1 +1,9 @@
 .DS_Store
+META.yml
+MANIFEST
+MANIFEST.bak
+Makefile.old
+Makefile
+blib/
+inc/
+pm_to_blib
