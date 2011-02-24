@@ -1,12 +1,21 @@
 package FCGI::Engine::ProcManager::Constrained;
 use Moose;
 use Config;
+use Try::Tiny;
+
+use constant IS_WIN32 => $Config{'osname'} eq 'MSWin32' ? 1 : 0;
 
 extends 'FCGI::Engine::ProcManager';
 
+sub BUILD {
+    if ($self->sizecheck_num_requests && ! _can_check_size()) {
+        confess "Cannot load size check modules for your platform: sizecheck_num_requests > 0 unsupported";
+    }
+}
+
 has max_requests => (
     isa => 'Int',
-    is => 'ro',
+    is => 'ro',      # FIXME - This is fuck ugly.
     default => sub { $ENV{PM_MAX_REQUESTS} || 0 },
 );
 
@@ -22,7 +31,12 @@ has request_count => (
     default => 0,
 );
 
-has sizecheck_num_requests => (
+has [qw/
+    sizecheck_num_requests
+    max_process_size
+    min_share_size
+    max_unshared_size
+/] => (
     isa => 'Int',
     is => 'ro',
     default => 0,
@@ -38,8 +52,11 @@ augment post_dispatch => sub {
     $self->exit("safe exit after max_requests (" . $self->max_requests . ")")
         if ($self->max_requests and $self->_inc_request_counter == $self->max_requests);
 
-    if ($self->sizecheck_num_requests and $self->request_count and $self->request_count % $self->sizecheck_num_requests == 0) {
-        $self->exit("safe exit due to memory limits exceeded")
+    if ($self->sizecheck_num_requests
+        and $self->request_count # Not the first request
+        and $self->request_count % $self->sizecheck_num_requests == 0
+    ) {
+        $self->exit("safe exit due to memory limits exceeded after " . $self->request_count . " requests")
             if $self->_limits_are_exceeded;
     }
 };
@@ -70,27 +87,22 @@ sub _check_size {
 
 sub _load {
     my $mod = shift;
-
-    Class::MOP::load_class($mod)
-        or die
-            "You must install $mod for " . __PACKAGE__ . " to work on your" .
-            " platform.\n";
+    try { Class::MOP::load_class($mod); 1; }
 }
 
 BEGIN {
     our $USE_SMAPS;
     my ($major,$minor) = split(/\./, $Config{'osvers'});
+    *_can_check_size = sub () { 1 };
     if ($Config{'osname'} eq 'solaris' &&
         (($major > 2) || ($major == 2 && $minor >= 6))) {
         *_platform_check_size   = \&_solaris_2_6_size_check;
         *_platform_getppid = \&_perl_getppid;
     }
-    elsif ($Config{'osname'} eq 'linux') {
-        _load('Linux::Pid');
-
+    elsif ($Config{'osname'} eq 'linux' && _load('Linux::Pid')) {
         *_platform_getppid = \&_linux_getppid;
 
-        if (eval { require Linux::Smaps } && Linux::Smaps->new($$)) {
+        if (_load(Linux::Smaps && Linux::Smaps->new($$)) {
             $USE_SMAPS = 1;
             *_platform_check_size = \&_linux_smaps_size_check;
         }
@@ -99,21 +111,19 @@ BEGIN {
             *_platform_check_size = \&_linux_size_check;
         }
     }
-    elsif ($Config{'osname'} =~ /(?:bsd|aix)/i) {
+    elsif ($Config{'osname'} =~ /(?:bsd|aix)/i && _load('BSD::Resource') {
         # on OSX, getrusage() is returning 0 for proc & shared size.
-        _load('BSD::Resource');
-
         *_platform_check_size   = \&_bsd_size_check;
         *_platform_getppid = \&_perl_getppid;
     }
-#    elsif (IS_WIN32i && $mod_perl::VERSION < 1.99) {
-#        _load('Win32::API');
-#
-#        *_platform_check_size   = \&_win32_size_check;
-#        *_platform_getppid = \&_perl_getppid;
-#    }
+    elsif (IS_WIN32 && _load('Win32::API') && $mod_perl::VERSION < 1.99) {
+        *_platform_check_size   = \&_win32_size_check;
+        *_platform_getppid = \&_perl_getppid;
+    }
     else {
-        die __PACKAGE__ . " is not implemented on your platform.";
+        no warnings 'redefine';
+        *_can_check_size = sub () { 0 };
+        use warnings 'redefine';
     }
 }
 
@@ -217,3 +227,89 @@ sub _linux_getppid { return Linux::Pid::getppid() }
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+FCGI::Engine::ProcManager::Constrained - FastCGI applications with memory and number of request limits.
+
+=head1 DESCRIPTION
+
+A constrained process manager that restarts child workers after a number of requests
+or if they use too much memory.
+
+Most of the memory usage code is stolen from L<Apache2::SizeLimit>.
+
+=head1 ATTRIBUTES
+
+=head2 max_requests
+
+The number of requests a child process can handle before being terminated.
+
+0 (the default) means let child processes do an infinite number of requests
+
+=head2 sizecheck_num_requests
+
+The number of requests between a check on the process size taking place.
+
+0 (the default) means never attempt to check the process size.
+
+=head2 max_process_size
+
+The maximum size of the process (both shared and unshared memory) in KB.
+
+0 (the default) means unlimited.
+
+=head2 max_unshared_size
+
+The maximum amount of memory in KB this process can have that isn't Copy-On-Write
+shared with other processes.
+
+0 (the default) means unlimited.
+
+=head2 min_share_size
+
+The minimum amount of memory in KB this process can have Copy-On-Write from
+it's parent process before it is terminate.
+
+=head1 METHODS
+
+I will fill this in more eventually, but for now if you really wanna know,
+read the source.
+
+=head1 SEE ALSO
+
+=over
+
+=item L<FCGI::Engine::ProcManager>
+
+=item L<Apache2::SizeLimit>.
+
+=back
+
+=head1 BUGS
+
+All complex software has bugs lurking in it, and this module is no
+exception. If you find a bug please either email me, or add the bug
+to cpan-RT.
+
+=head1 AUTHOR
+
+Tomas Doran E<lt>bobtfish@bobtfish.netE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Code sections copied from L<Apache2::SizeLimit> are Copyright their
+respective authors.
+
+Copyright 2007-2010 by Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
