@@ -30,7 +30,7 @@ feature 'Plack Support',
   'IO::String'       => 0;    # for the tests
 
 # things the tests need
-build_requires 'Test::More';
+build_requires 'Test::More' => '0.88';
 build_requires 'Test::Exception';
 build_requires 'Test::WWW::Mechanize';
 build_requires 'File::Spec';

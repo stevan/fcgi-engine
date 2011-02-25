@@ -6,6 +6,7 @@ use Try::Tiny;
 extends 'FCGI::Engine::ProcManager';
 
 sub BUILD {
+    my $self = shift;
     if ($self->sizecheck_num_requests && ! _can_check_size()) {
         confess "Cannot load size check modules for your platform: sizecheck_num_requests > 0 unsupported";
     }
@@ -87,20 +88,19 @@ sub _load {
     my $mod = shift;
     try { Class::MOP::load_class($mod); 1; }
 }
-
+our $USE_SMAPS;
 BEGIN {
-    our $USE_SMAPS;
     my ($major,$minor) = split(/\./, $Config{'osvers'});
-    *_can_check_size = sub () { 1 };
     if ($Config{'osname'} eq 'solaris' &&
         (($major > 2) || ($major == 2 && $minor >= 6))) {
+        *_can_check_size = sub () { 1 };
         *_platform_check_size   = \&_solaris_2_6_size_check;
         *_platform_getppid = \&_perl_getppid;
     }
     elsif ($Config{'osname'} eq 'linux' && _load('Linux::Pid')) {
         *_platform_getppid = \&_linux_getppid;
-
-        if (_load(Linux::Smaps && Linux::Smaps->new($$)) {
+        *_can_check_size = sub () { 1 };
+        if (_load('Linux::Smaps') && Linux::Smaps->new($$)) {
             $USE_SMAPS = 1;
             *_platform_check_size = \&_linux_smaps_size_check;
         }
@@ -109,15 +109,14 @@ BEGIN {
             *_platform_check_size = \&_linux_size_check;
         }
     }
-    elsif ($Config{'osname'} =~ /(?:bsd|aix)/i && _load('BSD::Resource') {
+    elsif ($Config{'osname'} =~ /(?:bsd|aix)/i && _load('BSD::Resource')) {
         # on OSX, getrusage() is returning 0 for proc & shared size.
+        *_can_check_size = sub () { 1 };
         *_platform_check_size   = \&_bsd_size_check;
         *_platform_getppid = \&_perl_getppid;
     }
     else {
-        no warnings 'redefine';
         *_can_check_size = sub () { 0 };
-        use warnings 'redefine';
     }
 }
 
