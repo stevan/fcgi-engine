@@ -64,6 +64,13 @@ has 'use_manager' => (
     default   => 0,
 );
 
+has 'forward_stderr' => ( # Because, like... maybe you want to debug stuff? nawwww
+    metaclass => 'Getopt',
+    is        => 'ro',
+    isa       => 'Bool',
+    default   => 1
+);
+
 # options to specify in your script
 
 has 'pre_fork_init' => (
@@ -110,7 +117,7 @@ sub create_request {
     return FCGI::Request(
         \*STDIN,
         \*STDOUT,
-        \*STDERR,
+        $self->forward_stderr ? \*STDERR : new IO::Handle,
         $env,
         $socket,
         &FCGI::FAIL_ACCEPT_ON_INTR
