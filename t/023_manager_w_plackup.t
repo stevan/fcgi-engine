@@ -20,6 +20,16 @@ BEGIN {
         eval "use Plack 0.9910; use FCGI::Client 0.04; use MooseX::NonMoose 0.07; use IO::String;";
         plan skip_all => "Plack 0.9910, FCGI::Client and MooseX::NonMoose are required for this test" if $@;
     }
+    {
+        my $plackup_found = 0;
+        if (eval { require File::Which; 1 }) {
+            $plackup_found = 1 if (File::Which::which('plackup'));
+        }
+        else {
+            $plackup_found = 1 if length(`which plackup`);
+        }
+        plan skip_all => 'plackup must be in $PATH' unless $plackup_found;
+    }
     plan tests => 11;
     use_ok('FCGI::Engine::Manager');
 }
