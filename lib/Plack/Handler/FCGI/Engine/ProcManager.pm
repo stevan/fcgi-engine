@@ -1,7 +1,7 @@
 package Plack::Handler::FCGI::Engine::ProcManager;
 use Moose;
 
-our $VERSION   = '0.18';
+our $VERSION   = '0.19';
 our $AUTHORITY = 'cpan:STEVAN';
 
 extends 'FCGI::Engine::ProcManager';

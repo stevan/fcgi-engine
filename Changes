@@ -1,5 +1,14 @@
 Revision history for Perl extension FCGI-Engine
 
+0.19 Wed. Oct. 5, 2011
+    - Fix tests to not fail when MooseX::NonMoose
+      isn't installed.
+    - exit 0 without writing a Makefile.PL rather than dieing
+      with an error code. exit(0) preferred by the toolchain.
+    - Add FCGI::Engine::ProcManager::Constrained subclass to manage
+      restarting children on over-memory or after a certtain number
+      of requests.
+
 0.18 Mon. Nov. 15, 2010
     - fixing the plack -E flag (it changed)
     - changing plackup usage to --daemonize
