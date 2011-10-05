@@ -39,5 +39,9 @@ build_requires 'Cwd';
 
 tests('t/*.t');
 
+resources(
+    'repository', => 'git://github.com/bobtfish/fcgi-engine.git',
+);
+
 WriteAll();
 
