@@ -1,5 +1,7 @@
 Revision history for Perl extension FCGI-Engine
 
+    - Add MooseX::NonMoose to the dependencies.
+
 0.18 Mon. Nov. 15, 2010
     - fixing the plack -E flag (it changed)
     - changing plackup usage to --daemonize

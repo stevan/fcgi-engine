@@ -16,6 +16,7 @@ requires 'Moose'                    => 0.93;
 requires 'MooseX::Daemonize'        => 0.09;
 requires 'MooseX::Getopt'           => 0.26;
 requires 'MooseX::Types::Path::Class';
+requires 'MooseX::NonMoose';
 requires 'Declare::Constraints::Simple';
 requires 'FCGI';
 requires 'CGI::Simple';
