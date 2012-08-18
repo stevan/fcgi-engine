@@ -13,6 +13,13 @@ has 'pidfile' => (
     coerce   => 1,
 );
 
+has 'process_name' => (
+    init_arg => 'pm_title',
+    is       => 'ro',
+    isa      => 'Str',
+    default  => sub { 'perl-fcgi' },
+);
+
 # FCGI::ProcManager compat
 
 sub pm_manage        { (shift)->manage( @_ )        }
