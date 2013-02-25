@@ -62,7 +62,9 @@ has 'pid_obj' => (
 
 sub construct_command_line {
     my $self = shift;
-    return ("perl",
+    my $perl = $Config{perlpath};
+    $perl .= $Config{_exe} if $^O ne 'VMS' and $perl !~ /$Config{_exe}$/i;
+    return ($perl,
          ($self->has_additional_args
              ? $self->additional_args
              : ()),
