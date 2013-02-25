@@ -1,5 +1,6 @@
 Revision history for Perl extension FCGI-Engine
 
+0.20 Mon. Feb. 25, 2013
     - Use Config to find perl to run RT#69473
 
 0.19 Wed. Oct. 5, 2011
