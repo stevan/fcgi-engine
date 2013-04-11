@@ -3,6 +3,7 @@ use Moose;
 
 use MooseX::Daemonize::Pid::File;
 use FCGI::Engine::Types;
+use Config;
 
 our $VERSION   = '0.20'; 
 our $AUTHORITY = 'cpan:STEVAN';

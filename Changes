@@ -1,5 +1,7 @@
 Revision history for Perl extension FCGI-Engine
 
+    - Fix RT#83636 by correctly importing the Config module.
+
 0.20 Mon. Feb. 25, 2013
     - Use Config to find perl to run RT#69473
 
