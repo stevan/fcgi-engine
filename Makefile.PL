@@ -22,6 +22,7 @@ requires 'FCGI';
 requires 'CGI::Simple';
 requires 'POSIX';
 requires 'Config::Any';
+requires 'Class::Load' => '0.20';
 
 feature 'Plack Support',
   -default           => 0,

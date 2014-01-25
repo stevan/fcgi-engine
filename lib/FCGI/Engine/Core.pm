@@ -5,6 +5,7 @@ use FCGI;
 use MooseX::Daemonize::Pid::File;
 use FCGI::Engine::Types;
 use FCGI::Engine::ProcManager;
+use Class::Load;
 
 use constant DEBUG => 0;
 
@@ -121,7 +122,7 @@ sub create_proc_manager {
     my ( $self, %addtional_options ) = @_;
 
     # make sure any subclasses are loaded ...
-    Class::MOP::load_class( $self->manager );
+    Class::Load::load_class( $self->manager );
 
     return $self->manager->new({
         n_processes => $self->nproc,
