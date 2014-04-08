@@ -194,7 +194,8 @@ sub run {
         $proc_manager && $proc_manager->pre_dispatch;
 
         $self->handle_request(
-            $self->prepare_environment( $env )
+            $self->prepare_environment( $env ),
+            $request
         );
 
         $proc_manager && $proc_manager->post_dispatch;
