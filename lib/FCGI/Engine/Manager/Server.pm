@@ -3,8 +3,9 @@ use Moose;
 
 use MooseX::Daemonize::Pid::File;
 use FCGI::Engine::Types;
+use Config;
 
-our $VERSION   = '0.19'; 
+our $VERSION   = '0.21'; 
 our $AUTHORITY = 'cpan:STEVAN';
 
 has 'name' => (
@@ -62,7 +63,9 @@ has 'pid_obj' => (
 
 sub construct_command_line {
     my $self = shift;
-    return ("perl",
+    my $perl = $Config{perlpath};
+    $perl .= $Config{_exe} if $^O ne 'VMS' and $perl !~ /$Config{_exe}$/i;
+    return ($perl,
          ($self->has_additional_args
              ? $self->additional_args
              : ()),

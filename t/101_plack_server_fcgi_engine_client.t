@@ -9,8 +9,8 @@ use Test::More;
 BEGIN {
     {
         local $@;
-        eval "use Plack 0.9910; use FCGI::Client 0.06; use MooseX::NonMoose 0.07; use IO::String;";
-        plan skip_all => "Plack 0.9910, FCGI::Client 0.06 and MooseX::NonMoose are required for this test" if $@;
+        eval "use Plack 0.9910; use FCGI::Client 0.06; use MooseX::NonMoose 0.07; use IO::String; use Plack::App::FCGIDispatcher;";
+        plan skip_all => "Plack 0.9910, FCGI::Client 0.06, MooseX::NonMoose 0.07 and Plack::App::FCGIDispatcher are required for this test" if $@;
     }
 }
 

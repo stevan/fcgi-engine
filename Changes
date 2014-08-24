@@ -1,5 +1,11 @@
 Revision history for Perl extension FCGI-Engine
 
+0.21 Thu. Apr. 11, 2013
+    - Fix RT#83636 by correctly importing the Config module.
+
+0.20 Mon. Feb. 25, 2013
+    - Use Config to find perl to run RT#69473
+
 0.19 Wed. Oct. 5, 2011
     - Fix tests to not fail when MooseX::NonMoose
       isn't installed.

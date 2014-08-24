@@ -8,7 +8,7 @@ use FCGI::Engine::ProcManager;
 
 use constant DEBUG => 0;
 
-our $VERSION   = '0.19';
+our $VERSION   = '0.21';
 our $AUTHORITY = 'cpan:STEVAN';
 
 with 'MooseX::Getopt',
@@ -194,7 +194,8 @@ sub run {
         $proc_manager && $proc_manager->pre_dispatch;
 
         $self->handle_request(
-            $self->prepare_environment( $env )
+            $self->prepare_environment( $env ),
+            $request
         );
 
         $proc_manager && $proc_manager->post_dispatch;
