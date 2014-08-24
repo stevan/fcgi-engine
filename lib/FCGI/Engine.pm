@@ -1,6 +1,7 @@
 package FCGI::Engine;
 use Moose;
 
+use Class::Load ();
 use CGI::Simple;
 
 our $VERSION   = '0.22';
@@ -38,7 +39,7 @@ augment 'initialize' => sub {
     my $handler_method = $self->handler_method;
     my $handler_args   = $self->handler_args_builder;
 
-    Class::MOP::load_class($handler_class) unless blessed $handler_class;
+    Class::Load::load_class($handler_class) unless blessed $handler_class;
 
     ($self->handler_class->can($handler_method))
         || confess "The handler class ("

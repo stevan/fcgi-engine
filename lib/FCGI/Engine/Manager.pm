@@ -1,6 +1,7 @@
 package FCGI::Engine::Manager;
 use Moose;
 
+use Class::Load ();
 use FCGI::Engine::Types;
 use FCGI::Engine::Manager::Server;
 
@@ -44,7 +45,7 @@ has '_servers' => (
         return [
             map {
                 $_->{server_class} ||= "FCGI::Engine::Manager::Server";
-                Class::MOP::load_class($_->{server_class});
+                Class::Load::load_class($_->{server_class});
                 $_->{server_class}->new(%$_);
             } @{$self->_config}
         ];

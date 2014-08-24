@@ -60,7 +60,7 @@ subtype 'FCGI::Engine::Manager::Config'
 
 ## FCGI::Engine::ProcManager
 
-enum 'FCGI::Engine::ProcManager::Role' => qw[manager server];
+enum 'FCGI::Engine::ProcManager::Role' => [ qw[manager server] ];
 
 1;
 

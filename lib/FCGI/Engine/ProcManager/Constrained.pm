@@ -1,6 +1,8 @@
 package FCGI::Engine::ProcManager::Constrained;
 use Moose;
+
 use Config;
+use Class::Load ();
 use Try::Tiny;
 
 extends 'FCGI::Engine::ProcManager';
@@ -86,7 +88,7 @@ sub _check_size {
 
 sub _load {
     my $mod = shift;
-    try { Class::MOP::load_class($mod); 1; }
+    try { Class::Load::load_class($mod); 1; }
 }
 our $USE_SMAPS;
 BEGIN {
