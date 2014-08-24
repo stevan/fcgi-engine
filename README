@@ -1,4 +1,4 @@
-FCGI-Engine version 0.21
+FCGI-Engine version 0.22
 ===========================
 
 See the individual module documentation for more information
@@ -33,7 +33,7 @@ For Plack support:
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2007-2010 Infinity Interactive, Inc.
+Copyright (C) 2007-2014 Infinity Interactive, Inc.
 
 http://www.iinteractive.com
 

@@ -1,5 +1,10 @@
 Revision history for Perl extension FCGI-Engine
 
+0.22 Sun, Aug. 24th, 2014
+    - Add $request object to params passed to 
+      handle_request to support FCGI forking in 
+      request handler. (thanks to Robert Decker)
+
 0.21 Thu. Apr. 11, 2013
     - Fix RT#83636 by correctly importing the Config module.
 
