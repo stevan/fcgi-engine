@@ -6,6 +6,7 @@ use FCGI;
 use MooseX::Daemonize::Pid::File;
 use FCGI::Engine::Types;
 use FCGI::Engine::ProcManager;
+use Class::Load;
 
 use constant DEBUG => 0;
 

@@ -4,6 +4,7 @@ use Moose;
 use Class::Load ();
 use FCGI::Engine::Types;
 use FCGI::Engine::Manager::Server;
+use Class::Load;
 
 use Config::Any;
 

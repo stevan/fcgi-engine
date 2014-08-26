@@ -4,6 +4,7 @@ use Moose;
 use Config;
 use Class::Load ();
 use Try::Tiny;
+use Class::Load;
 
 extends 'FCGI::Engine::ProcManager';
 
