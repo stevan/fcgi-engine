@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use inc::Module::Install;
+use Module::Install::Authority;
 
 if ($^O eq 'Win32' or $^O eq 'cygwin') {
     print STDERR "This module is not for use on Windows, sorry.";
@@ -10,6 +11,7 @@ if ($^O eq 'Win32' or $^O eq 'cygwin') {
 name 'FCGI-Engine';
 all_from 'lib/FCGI/Engine.pm';
 license 'perl';
+authority 'cpan:STEVAN';
 
 # prereqs
 requires 'Moose'                    => 0.93;
