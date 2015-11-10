@@ -200,6 +200,8 @@ sub run {
             $request
         );
 
+        $request->Finish();
+
         $proc_manager && $proc_manager->post_dispatch;
     }
 }
