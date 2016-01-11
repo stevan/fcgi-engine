@@ -21,7 +21,7 @@ has 'app' => (
 # - SL
 
 augment 'prepare_environment' => sub {
-    my ($self, $env) = @_;
+    my ($self, $env, $proc_manager) = @_;
     return +{
         %$env,
         'psgi.version'      => [1,0],
@@ -34,6 +34,8 @@ augment 'prepare_environment' => sub {
         'psgi.run_once'     => Plack::Util::FALSE,
         'psgi.streaming'    => Plack::Util::TRUE,
         'psgi.nonblocking'  => Plack::Util::FALSE,
+
+        'psgix.harakiri'    => defined $proc_manager,
     };
 };
 
@@ -82,6 +84,16 @@ sub _handle_response {
             close => sub { };
     }
 }
+
+around 'process_request' => sub {
+    my ($orig, $self, $env, $request, $proc_manager) = @_;
+
+    $self->$orig($env, $request);
+
+    if ($proc_manager && $env->{'psgix.harakiri.commit'}) {
+        $proc_manager->exit("safe exit with harakiri");
+    }
+};
 
 __PACKAGE__->meta->make_immutable;
 
