@@ -192,18 +192,24 @@ sub run {
     }
 
     while ($request->Accept() >= 0) {
-
-        $proc_manager && $proc_manager->pre_dispatch;
-
-        $self->handle_request(
-            $self->prepare_environment( $env ),
-            $request
+        $self->process_request(
+            $self->prepare_environment($env, $proc_manager),
+            $request,
+            $proc_manager
         );
-
-        $request->Finish();
-
-        $proc_manager && $proc_manager->post_dispatch;
     }
+}
+
+sub process_request {
+    my ($self, $env, $request, $proc_manager) = @_;
+
+    $proc_manager && $proc_manager->pre_dispatch;
+
+    $self->handle_request($env, $request);
+
+    $request->Finish();
+
+    $proc_manager && $proc_manager->post_dispatch;
 }
 
 1;
