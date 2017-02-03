@@ -18,6 +18,7 @@ has 'pidfile' => (
 sub pm_manage        { (shift)->manage( @_ )        }
 sub pm_pre_dispatch  { (shift)->pre_dispatch( @_ )  }
 sub pm_post_dispatch { (shift)->post_dispatch( @_ ) }
+sub pm_exit          { (shift)->die( @_ ) }
 
 sub notify {
     my ($self, $msg) = @_;

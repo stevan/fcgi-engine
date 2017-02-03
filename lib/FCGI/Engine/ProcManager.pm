@@ -334,8 +334,10 @@ sub die : method {
     $SIG{HUP}  = 'DEFAULT';
     $SIG{TERM} = 'DEFAULT';
 
-    $self->pidfile->remove
-        || $self->notify("Could not remove PID file: $!");
+    if ($self->pidfile->does_file_exist) {
+        $self->pidfile->remove
+            || $self->notify("Could not remove PID file: $!");
+    }
 
     # prepare to die no matter what.
     if (defined $self->die_timeout) {
